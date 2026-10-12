@@ -166,10 +166,14 @@ export function fetchAll(sources: Source[] = SOURCES): Promise<FetchResult[]> {
   return running;
 }
 
-// `node src/fetcher.ts` — run one fetch pass and print a report.
+// `node src/lib/fetcher.ts [--local | --remote]`: run one fetch pass and print a report.
+//   --remote  skip sources marked `local` (what the GitHub Action runs; those publishers block cloud servers)
+//   --local   only sources marked `local` (what scripts/local-refresh.sh runs on the maintainer's Mac)
 if (import.meta.main) {
   const started = Date.now();
-  const results = await fetchAll();
+  const mode = process.argv.includes('--local') ? 'local' : process.argv.includes('--remote') ? 'remote' : 'all';
+  const sources = SOURCES.filter((s) => mode === 'all' || (mode === 'local') === !!s.local);
+  const results = await fetchAll(sources);
   for (const r of results.sort((a, b) => a.source.name.localeCompare(b.source.name))) {
     const tag = r.status === 'error' ? 'ERR ' : r.status === 'not-modified' ? '304 ' : 'OK  ';
     console.log(`${tag} ${r.source.name.padEnd(45)} ${r.error ?? `+${r.added}`}`);

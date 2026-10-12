@@ -11,6 +11,11 @@ export interface Source {
   category: Category;
   /** Only keep items whose title/summary match — for broad feeds that aren't higher-ed specific. */
   include?: RegExp;
+  /**
+   * The publisher blocks cloud servers (GitHub Actions gets 403s or timeouts), so this feed is fetched on the
+   * maintainer's Mac by scripts/local-refresh.sh and imported by the daily workflow. See docs/local-feeds.md.
+   */
+  local?: true;
 }
 
 export const CATEGORIES: Record<Category, { label: string; slug: string; blurb: string }> = {
@@ -61,8 +66,8 @@ export const SOURCES: Source[] = [
   // ── Vendors (first-party feeds) ─────────────────────────────────────────
   { id: 'd2l', name: 'D2L', site: 'https://www.d2l.com/blog/', feed: 'https://www.d2l.com/blog/feed/', category: 'vendor' },
   { id: 'brightspace-community', name: 'D2L Brightspace Community', site: 'https://community.d2l.com/brightspace', feed: 'https://community.d2l.com/brightspace/discussions/feed.rss', category: 'vendor' },
-  { id: 'moodle', name: 'Moodle', site: 'https://moodle.com', feed: 'https://moodle.com/feed/', category: 'vendor' },
-  { id: 'kaltura', name: 'Kaltura', site: 'https://corp.kaltura.com/blog/', feed: 'https://corp.kaltura.com/blog/feed/', category: 'vendor' },
+  { id: 'moodle', name: 'Moodle', site: 'https://moodle.com', feed: 'https://moodle.com/feed/', category: 'vendor', local: true },
+  { id: 'kaltura', name: 'Kaltura', site: 'https://corp.kaltura.com/blog/', feed: 'https://corp.kaltura.com/blog/feed/', category: 'vendor', local: true },
   { id: 'yuja', name: 'YuJa', site: 'https://www.yuja.com', feed: 'https://www.yuja.com/feed/', category: 'vendor' },
   { id: 'echo360', name: 'Echo360', site: 'https://echo360.com', feed: 'https://echo360.com/feed/', category: 'vendor' },
   { id: 'tophat', name: 'Top Hat', site: 'https://tophat.com', feed: 'https://tophat.com/feed/', category: 'vendor' },
@@ -101,25 +106,25 @@ export const SOURCES: Source[] = [
   { id: 'tonybates', name: 'Tony Bates', site: 'https://www.tonybates.ca', feed: 'https://www.tonybates.ca/feed/', category: 'blog' },
   { id: 'bryanalexander', name: 'Bryan Alexander', site: 'https://bryanalexander.org', feed: 'https://bryanalexander.org/feed/', category: 'blog' },
   { id: 'audreywatters', name: 'Second Breakfast (Audrey Watters)', site: 'https://2ndbreakfast.audreywatters.com', feed: 'https://2ndbreakfast.audreywatters.com/rss/', category: 'blog' },
-  { id: 'edtechie', name: 'The Ed Techie (Martin Weller)', site: 'https://blog.edtechie.net', feed: 'https://blog.edtechie.net/feed/', category: 'blog' },
+  { id: 'edtechie', name: 'The Ed Techie (Martin Weller)', site: 'https://blog.edtechie.net', feed: 'https://blog.edtechie.net/feed/', category: 'blog', local: true },
   { id: 'bavatuesdays', name: 'bavatuesdays (Jim Groom)', site: 'https://bavatuesdays.com', feed: 'https://bavatuesdays.com/feed/', category: 'blog' },
   { id: 'cogdog', name: 'CogDogBlog (Alan Levine)', site: 'https://cogdogblog.com', feed: 'https://cogdogblog.com/feed/', category: 'blog' },
   { id: 'mahabali', name: 'Maha Bali', site: 'https://blog.mahabali.me', feed: 'https://blog.mahabali.me/feed/', category: 'blog' },
   { id: 'kelchen', name: 'Kelchen on Education (Robert Kelchen)', site: 'https://robertkelchen.com', feed: 'https://robertkelchen.com/feed/', category: 'blog' },
   { id: 'oneusefulthing', name: 'One Useful Thing (Ethan Mollick)', site: 'https://www.oneusefulthing.org', feed: 'https://www.oneusefulthing.org/feed', category: 'blog' },
-  { id: 'lanceeaton', name: 'AI + Education = Simplified (Lance Eaton)', site: 'https://aiedusimplified.substack.com', feed: 'https://aiedusimplified.substack.com/feed', category: 'blog' },
-  { id: 'marcwatkins', name: 'Rhetorica (Marc Watkins)', site: 'https://marcwatkins.substack.com', feed: 'https://marcwatkins.substack.com/feed', category: 'blog' },
-  { id: 'joshbrake', name: 'The Absent-Minded Professor (Josh Brake)', site: 'https://joshbrake.substack.com', feed: 'https://joshbrake.substack.com/feed', category: 'blog' },
-  { id: 'michaelhorn', name: 'Michael B. Horn', site: 'https://michaelbhorn.substack.com', feed: 'https://michaelbhorn.substack.com/feed', category: 'blog' },
-  { id: 'mikecaulfield', name: 'Mike Caulfield', site: 'https://mikecaulfield.substack.com', feed: 'https://mikecaulfield.substack.com/feed', category: 'blog' },
-  { id: 'annamills', name: 'Anna Mills', site: 'https://annamills.substack.com', feed: 'https://annamills.substack.com/feed', category: 'blog' },
-  { id: 'derekbruff', name: 'Agile Learning (Derek Bruff)', site: 'https://derekbruff.org', feed: 'https://derekbruff.org/feed/', category: 'blog' },
+  { id: 'lanceeaton', name: 'AI + Education = Simplified (Lance Eaton)', site: 'https://aiedusimplified.substack.com', feed: 'https://aiedusimplified.substack.com/feed', category: 'blog', local: true },
+  { id: 'marcwatkins', name: 'Rhetorica (Marc Watkins)', site: 'https://marcwatkins.substack.com', feed: 'https://marcwatkins.substack.com/feed', category: 'blog', local: true },
+  { id: 'joshbrake', name: 'The Absent-Minded Professor (Josh Brake)', site: 'https://joshbrake.substack.com', feed: 'https://joshbrake.substack.com/feed', category: 'blog', local: true },
+  { id: 'michaelhorn', name: 'Michael B. Horn', site: 'https://michaelbhorn.substack.com', feed: 'https://michaelbhorn.substack.com/feed', category: 'blog', local: true },
+  { id: 'mikecaulfield', name: 'Mike Caulfield', site: 'https://mikecaulfield.substack.com', feed: 'https://mikecaulfield.substack.com/feed', category: 'blog', local: true },
+  { id: 'annamills', name: 'Anna Mills', site: 'https://annamills.substack.com', feed: 'https://annamills.substack.com/feed', category: 'blog', local: true },
+  { id: 'derekbruff', name: 'Agile Learning (Derek Bruff)', site: 'https://derekbruff.org', feed: 'https://derekbruff.org/feed/', category: 'blog', local: true },
   { id: 'leonfurze', name: 'Leon Furze', site: 'https://leonfurze.com', feed: 'https://leonfurze.com/feed/', category: 'blog' },
   { id: 'donaldclark', name: 'Plan B (Donald Clark)', site: 'https://donaldclarkplanb.blogspot.com', feed: 'https://donaldclarkplanb.blogspot.com/feeds/posts/default', category: 'blog' },
   { id: 'guzdial', name: 'Computing Ed Research (Mark Guzdial)', site: 'https://computinged.wordpress.com', feed: 'https://computinged.wordpress.com/feed/', category: 'blog' },
-  { id: 'danmeyer', name: 'Dan Meyer', site: 'https://danmeyer.substack.com', feed: 'https://danmeyer.substack.com/feed', category: 'blog' },
+  { id: 'danmeyer', name: 'Dan Meyer', site: 'https://danmeyer.substack.com', feed: 'https://danmeyer.substack.com/feed', category: 'blog', local: true },
   { id: 'teachinginhighered', name: 'Teaching in Higher Ed (Bonni Stachowiak)', site: 'https://teachinginhighered.com', feed: 'https://teachinginhighered.com/feed/', category: 'blog' },
-  { id: 'teaforteaching', name: 'Tea for Teaching', site: 'https://teaforteaching.com', feed: 'https://teaforteaching.com/feed/', category: 'blog' },
+  { id: 'teaforteaching', name: 'Tea for Teaching', site: 'https://teaforteaching.com', feed: 'https://teaforteaching.com/feed/', category: 'blog', local: true },
 
   // ── Orgs & Research ─────────────────────────────────────────────────────
   { id: 'ithaka', name: 'Ithaka S+R', site: 'https://sr.ithaka.org', feed: 'https://sr.ithaka.org/feed/', category: 'org' },

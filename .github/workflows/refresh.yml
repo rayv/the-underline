@@ -44,8 +44,19 @@ jobs:
         if: steps.restore-db.outputs.cache-matched-key == ''
         run: echo "::warning::No cached database found; starting fresh. History older than each feed's current items is lost."
 
+      # Feeds that block cloud servers are fetched on the maintainer's Mac and pushed to the local-feeds
+      # branch (scripts/local-refresh.sh, docs/local-feeds.md). Import whatever is there; it's idempotent.
+      - name: Import local feeds
+        run: |
+          if git fetch --quiet --depth=1 origin local-feeds; then
+            git show FETCH_HEAD:local-items.json > "$RUNNER_TEMP/local-items.json"
+            node scripts/import-local.ts "$RUNNER_TEMP/local-items.json"
+          else
+            echo "::warning::No local-feeds branch; skipping feeds that block cloud servers."
+          fi
+
       - name: Fetch feeds
-        run: npm run fetch
+        run: npm run fetch -- --remote
 
       - name: Save database
         uses: actions/cache/save@v4
