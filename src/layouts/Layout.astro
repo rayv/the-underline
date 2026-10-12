@@ -2,10 +2,12 @@
 import '../styles/global.css';
 import { CATEGORIES, CATEGORY_KEYS, SOURCES, paths, type Category } from '../lib/sources.ts';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TZ } from '../lib/format.ts';
+import { TOPICS } from '../lib/topics.ts';
 
 interface Props {
   title?: string;
-  active?: Category | 'all' | 'sources' | 'search';
+  /** Highlighted tab: a category key, `topic:<slug>`, 'all', 'sources', or 'search'. */
+  active?: string;
   feedHref?: string;
 }
 
@@ -14,6 +16,7 @@ const searchCategory = active in CATEGORIES ? (active as Category) : undefined;
 const tabs = [
   { key: 'all', href: paths.home(), label: 'All' },
   ...CATEGORY_KEYS.map((c) => ({ key: c, href: paths.category(c), label: CATEGORIES[c].label })),
+  ...TOPICS.map((t) => ({ key: `topic:${t.slug}`, href: paths.topic(t.slug), label: t.label })),
   { key: 'sources', href: '/sources/', label: 'Sources' },
 ];
 ---

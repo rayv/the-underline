@@ -1,18 +1,20 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { sourceStatuses } from '../lib/queries.ts';
+import { activeSourceIds, sourceStatuses } from '../lib/queries.ts';
 import { CATEGORIES, CATEGORY_KEYS, paths } from '../lib/sources.ts';
 import { hostname, shortDateTime } from '../lib/format.ts';
 
 const statuses = sourceStatuses();
 const healthy = statuses.filter((s) => s.lastSuccess && !s.lastError).length;
+const active = activeSourceIds();
+const quiet = statuses.filter((s) => !active.has(s.source.id)).length;
 ---
 
 <Layout title="Sources" active="sources">
   <div class="river-head">
     <h1>Sources</h1>
     <p class="blurb">
-      {statuses.length} feeds, {healthy} healthy on the last refresh. Subscribe to all of them in your own reader with
+      {statuses.length} feeds, {healthy} healthy on the last refresh{quiet > 0 && `, ${quiet} quiet (nothing new in 90 days, so hidden from sidebars)`}. Subscribe to all of them in your own reader with
       the <a href="/sources.opml">OPML file</a>.
     </p>
   </div>
@@ -38,6 +40,8 @@ const healthy = statuses.filter((s) => s.lastSuccess && !s.lastError).length;
                 <td>
                   {s.lastError ? (
                     <span class="status status-error" title={s.lastError}>Error</span>
+                  ) : s.lastSuccess && !active.has(s.source.id) ? (
+                    <span class="status" title="No new items in 90 days; hidden from sidebars">Quiet</span>
                   ) : s.lastSuccess ? (
                     <span class="status status-ok">OK</span>
                   ) : (

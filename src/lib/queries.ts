@@ -72,6 +72,13 @@ export function sourceStatuses(): SourceStatus[] {
   });
 }
 
+/** Sources with at least one item published in the last `days` days. Quiet sources are left out of sidebars. */
+export function activeSourceIds(days = 90): Set<string> {
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+  const rows = db.prepare(`SELECT DISTINCT source_id FROM items WHERE published_at > ?`).all(cutoff) as { source_id: string }[];
+  return new Set(rows.map((r) => r.source_id));
+}
+
 export function lastRefresh(): Date | null {
   const r = db.prepare(`SELECT max(last_attempt) AS t FROM source_status`).get() as { t: string | null };
   return r.t ? new Date(r.t) : null;

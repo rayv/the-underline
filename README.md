@@ -41,6 +41,7 @@ Environment variables:
 
 ```
 src/lib/sources.ts   source registry: the one file to edit when adding or removing feeds
+src/lib/topics.ts    cross-section topics (e.g. Student Success) and their keyword rules
 src/lib/fetcher.ts   fetch feeds → data/news.db
 src/lib/db.ts        SQLite (built-in node:sqlite)
 src/lib/queries.ts   read items and source health for the build
@@ -80,9 +81,10 @@ Search also runs in the browser, against `/search.json`.
 | `/`, `/page/N/` | All headlines |
 | `/news/`, `/vendors/`, `/vendor-watch/`, `/voices/`, `/orgs/` (+ `page/N/`) | Sections |
 | `/source/<id>/` | One source |
+| `/topics/student-success/` (+ `page/N/`) | A topic: matching headlines from every section |
 | `/sources/` | Every source, with its health and latest item |
 | `/search/?q=…&category=…` | Search |
-| `/rss.xml`, `/<section>/rss.xml`, `/source/<id>/rss.xml` | RSS feeds |
+| `/rss.xml`, `/<section>/rss.xml`, `/source/<id>/rss.xml`, `/topics/<slug>/rss.xml` | RSS feeds |
 | `/sources.opml` | All source feeds, for import into a feed reader |
 | `/items.json`, `/search.json` | JSON |
 
@@ -106,6 +108,21 @@ One-time setup:
 4. Run the workflow manually once to seed the database and deploy.
 
 See [docs/netlify-migration.md](docs/netlify-migration.md) for why the site is built this way.
+
+## Topics
+
+A topic is a page that collects headlines from across all sections. Topics are defined in `src/lib/topics.ts`. A headline belongs to a topic if either:
+
+- its source is listed in the topic's `sources` (for sources that cover only that topic), or
+- its title or summary matches the topic's `pattern`.
+
+To add a topic, add an entry there. It gets a tab, a page, and an RSS feed automatically.
+
+Keyword rules need tuning. Before shipping a new or changed rule, review which headlines it catches. For example, bare "retention" mostly caught staff and data retention stories, so the Student Success rule requires a student context.
+
+## Quiet sources
+
+Sources with nothing published in the last 90 days are hidden from sidebars, which keeps out personal blogs that have gone dormant. They're still fetched and still have their own pages, and `/sources/` labels them "Quiet". They reappear in sidebars as soon as they publish again.
 
 ## Adding a source
 

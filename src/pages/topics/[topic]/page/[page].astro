@@ -1,0 +1,22 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Layout from '../../../../layouts/Layout.astro';
+import River from '../../../../components/River.astro';
+import { getItems } from '../../../../lib/queries.ts';
+import { TOPICS, inTopic } from '../../../../lib/topics.ts';
+import { pageNumbers } from '../../../../lib/format.ts';
+
+export const getStaticPaths = (() => {
+  const all = getItems();
+  return TOPICS.flatMap((topic) => {
+    const items = all.filter((i) => inTopic(topic, i));
+    return pageNumbers(items.length).map((page) => ({ params: { topic: topic.slug, page: String(page) }, props: { topic, items, page } }));
+  });
+}) satisfies GetStaticPaths;
+
+const { topic, items, page } = Astro.props;
+---
+
+<Layout title={`${topic.label}, page ${page}`} active={`topic:${topic.slug}`} feedHref={`/topics/${topic.slug}/rss.xml`}>
+  <River items={items} topic={topic} page={page} />
+</Layout>

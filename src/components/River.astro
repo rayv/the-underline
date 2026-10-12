@@ -1,7 +1,8 @@
 ---
 import ItemRow from './ItemRow.astro';
 import type { Item } from '../lib/queries.ts';
-import { lastRefresh } from '../lib/queries.ts';
+import { activeSourceIds, lastRefresh } from '../lib/queries.ts';
+import type { Topic } from '../lib/topics.ts';
 import { CATEGORIES, SOURCES, SOURCE_BY_ID, paths, type Category } from '../lib/sources.ts';
 import { MAX_PAGES, PAGE_SIZE, groupByDay, hostname, pageSlice, shortDateTime } from '../lib/format.ts';
 
@@ -10,19 +11,30 @@ interface Props {
   page?: number;
   category?: Category;
   sourceId?: string;
+  topic?: Topic;
 }
 
-const { items, page = 1, category, sourceId } = Astro.props;
+const { items, page = 1, category, sourceId, topic } = Astro.props;
 const source = sourceId ? SOURCE_BY_ID.get(sourceId) : undefined;
 const pageCount = sourceId ? 1 : Math.min(MAX_PAGES, Math.ceil(items.length / PAGE_SIZE));
 const shown = sourceId ? items : pageSlice(items, page);
 const groups = groupByDay(shown);
-const pageHref = (n: number) => (category ? paths.category(category, n) : paths.home(n));
+const pageHref = (n: number) =>
+  topic ? paths.topic(topic.slug, n) : category ? paths.category(category, n) : paths.home(n);
 
-const heading = source?.name ?? (category ? CATEGORIES[category].label : 'Latest');
-const blurb = source ? '' : category ? CATEGORIES[category].blurb : 'Everything from every source, newest first.';
+const heading = source?.name ?? topic?.label ?? (category ? CATEGORIES[category].label : 'Latest');
+const blurb = source ? '' : (topic?.blurb ?? (category ? CATEGORIES[category].blurb : 'Everything from every source, newest first.'));
+
+// Sidebar: the sources behind this listing, minus any that have been quiet for 90 days.
+const active = activeSourceIds();
 const sidebarCategory = category ?? source?.category;
-const sidebarSources = SOURCES.filter((s) => !sidebarCategory || s.category === sidebarCategory);
+const topicSourceIds = topic ? new Set(items.map((i) => i.source.id)) : undefined;
+const sidebarSources = SOURCES.filter(
+  (s) =>
+    (active.has(s.id) || s.id === sourceId) &&
+    (topicSourceIds ? topicSourceIds.has(s.id) : !sidebarCategory || s.category === sidebarCategory),
+);
+const sidebarLabel = topic?.label ?? (sidebarCategory ? CATEGORIES[sidebarCategory].label : 'All');
 const refreshed = lastRefresh();
 ---
 
@@ -60,7 +72,7 @@ const refreshed = lastRefresh();
     )}
   </section>
   <aside class="sidebar" aria-label="Sources">
-    <h2>{sidebarCategory ? CATEGORIES[sidebarCategory].label : 'All'} sources</h2>
+    <h2>{sidebarLabel} sources</h2>
     <ul class="source-list">
       {sidebarSources.map((s) => (
         <li><a href={paths.source(s.id)} class:list={{ 'is-active': s.id === sourceId }}>{s.name}</a></li>

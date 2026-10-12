@@ -29,6 +29,7 @@ export const paths = {
   home: (page = 1) => (page > 1 ? `/page/${page}/` : '/'),
   category: (c: Category, page = 1) => `/${CATEGORIES[c].slug}/${page > 1 ? `page/${page}/` : ''}`,
   source: (id: string) => `/source/${id}/`,
+  topic: (slug: string, page = 1) => `/topics/${slug}/${page > 1 ? `page/${page}/` : ''}`,
 };
 
 const EDU = /\b(higher ed|higher-ed|universit|college|campus|student|faculty|educat|teach|learn|school|academ|edtech)/i;
@@ -40,11 +41,12 @@ export const SOURCES: Source[] = [
   // ── News ────────────────────────────────────────────────────────────────
   { id: 'insidehighered', name: 'Inside Higher Ed', site: 'https://www.insidehighered.com', feed: 'https://www.insidehighered.com/rss.xml', category: 'news' },
   { id: 'highereddive', name: 'Higher Ed Dive', site: 'https://www.highereddive.com', feed: 'https://www.highereddive.com/feeds/news/', category: 'news' },
+  { id: 'highereddive-success', name: 'Higher Ed Dive: Student Success', site: 'https://www.highereddive.com/topic/student-success/', feed: 'https://www.highereddive.com/feeds/topic/student-success/', category: 'news' },
   { id: 'edsurge', name: 'EdSurge', site: 'https://www.edsurge.com', feed: 'https://www.edsurge.com/articles_rss', category: 'news' },
   { id: 'campustechnology', name: 'Campus Technology', site: 'https://campustechnology.com', feed: 'https://campustechnology.com/rss-feeds/news.aspx', category: 'news' },
   { id: 'edtechmagazine', name: 'EdTech Magazine: Higher Ed', site: 'https://edtechmagazine.com/higher', feed: 'https://edtechmagazine.com/higher/rss.xml', category: 'news' },
   { id: 'ecampusnews', name: 'eCampus News', site: 'https://www.ecampusnews.com', feed: 'https://www.ecampusnews.com/feed/', category: 'news' },
-  { id: 'hechinger', name: 'The Hechinger Report', site: 'https://hechingerreport.org', feed: 'https://hechingerreport.org/feed/', category: 'news' },
+  { id: 'hechinger', name: 'The Hechinger Report', site: 'https://hechingerreport.org', feed: 'https://hechingerreport.org/category/higher-education/feed/', category: 'news' },
   { id: 'eduledger', name: 'The EDU Ledger (Diverse)', site: 'https://www.theeduledger.com', feed: 'https://www.theeduledger.com/feed', category: 'news' },
   { id: 'govtech-highered', name: 'GovTech: Higher Ed', site: 'https://www.govtech.com/education/higher-ed', feed: 'https://www.govtech.com/education/higher-ed.rss', category: 'news' },
   { id: 'edscoop', name: 'EdScoop', site: 'https://edscoop.com', feed: 'https://edscoop.com/feed/', category: 'news' },
@@ -67,6 +69,8 @@ export const SOURCES: Source[] = [
   { id: 'hypothesis', name: 'Hypothesis', site: 'https://web.hypothes.is', feed: 'https://web.hypothes.is/feed/', category: 'vendor' },
   { id: 'packback', name: 'Packback', site: 'https://packback.co', feed: 'https://packback.co/feed/', category: 'vendor' },
   { id: 'watermark', name: 'Watermark', site: 'https://www.watermarkinsights.com', feed: 'https://www.watermarkinsights.com/feed/', category: 'vendor' },
+  { id: 'mainstay', name: 'Mainstay', site: 'https://mainstay.com', feed: 'https://mainstay.com/feed/', category: 'vendor' },
+  { id: 'pathify', name: 'Pathify', site: 'https://pathify.com', feed: 'https://pathify.com/feed/', category: 'vendor' },
   { id: 'respondus', name: 'Respondus', site: 'https://web.respondus.com', feed: 'https://web.respondus.com/feed/', category: 'vendor' },
   { id: 'lumen', name: 'Lumen Learning', site: 'https://lumenlearning.com', feed: 'https://lumenlearning.com/feed/', category: 'vendor' },
   { id: 'coursera', name: 'Coursera', site: 'https://blog.coursera.org', feed: 'https://blog.coursera.org/feed/', category: 'vendor' },
@@ -80,7 +84,10 @@ export const SOURCES: Source[] = [
   // ── Vendor Watch (Google News queries for vendors/outlets without usable feeds)
   { id: 'gn-instructure', name: 'Instructure / Canvas', site: 'https://www.instructure.com', feed: googleNews('"Instructure" OR "Canvas LMS"'), category: 'watch' },
   { id: 'gn-ellucian', name: 'Ellucian', site: 'https://www.ellucian.com', feed: googleNews('"Ellucian"'), category: 'watch' },
-  { id: 'gn-anthology', name: 'Anthology / Blackboard', site: 'https://www.anthology.com', feed: googleNews('"Anthology" Blackboard'), category: 'watch' },
+  { id: 'gn-anthology', name: 'Anthology / Blackboard', site: 'https://www.anthology.com', feed: googleNews('Blackboard LMS'), category: 'watch' },
+  { id: 'gn-eab', name: 'EAB / Navigate360', site: 'https://eab.com', feed: googleNews('"EAB" (Navigate OR "student success")'), category: 'watch' },
+  { id: 'gn-civitas', name: 'Civitas Learning', site: 'https://www.civitaslearning.com', feed: googleNews('"Civitas Learning"'), category: 'watch' },
+  { id: 'gn-element451', name: 'Element451', site: 'https://element451.com', feed: googleNews('"Element451"'), category: 'watch' },
   { id: 'gn-unizin', name: 'Unizin', site: 'https://unizin.org', feed: googleNews('"Unizin"'), category: 'watch' },
   { id: 'gn-turnitin', name: 'Turnitin', site: 'https://www.turnitin.com', feed: googleNews('"Turnitin"'), category: 'watch' },
   { id: 'gn-1edtech', name: '1EdTech', site: 'https://www.1edtech.org', feed: googleNews('"1EdTech"'), category: 'watch' },
@@ -126,6 +133,10 @@ export const SOURCES: Source[] = [
   { id: 'digitalpromise', name: 'Digital Promise', site: 'https://digitalpromise.org', feed: 'https://digitalpromise.org/feed/', category: 'org' },
   { id: 'cast', name: 'CAST', site: 'https://www.cast.org', feed: 'https://www.cast.org/feed/', category: 'org' },
   { id: 'sparc', name: 'SPARC', site: 'https://sparcopen.org', feed: 'https://sparcopen.org/feed/', category: 'org' },
+  { id: 'lumina', name: 'Lumina Foundation', site: 'https://www.luminafoundation.org', feed: 'https://www.luminafoundation.org/news-and-views/feed/', category: 'org' },
+  { id: 'nsc-research', name: 'National Student Clearinghouse Research Center', site: 'https://nscresearchcenter.org', feed: 'https://nscresearchcenter.org/feed/', category: 'org' },
+  { id: 'ihep', name: 'Institute for Higher Education Policy', site: 'https://www.ihep.org', feed: 'https://www.ihep.org/feed/', category: 'org' },
+  { id: 'tyton', name: 'Tyton Partners', site: 'https://tytonpartners.com', feed: 'https://tytonpartners.com/feed/', category: 'org' },
   { id: 'oeglobal', name: 'Open Education Global', site: 'https://www.oeglobal.org', feed: 'https://www.oeglobal.org/feed/', category: 'org' },
 ];
 
