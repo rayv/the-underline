@@ -459,3 +459,86 @@ html[data-filtering] .river[data-filterable] .river-static { display: none; }
   cursor: pointer;
 }
 .more-btn:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── time range toggle ────────────────────────────────── */
+
+.topic-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.when-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  margin-right: 8px;
+}
+.when-btn {
+  font: 600 0.84rem/1 var(--sans);
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.when-btn:hover { color: var(--text); }
+.when-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+
+/* ── welcome dialog ───────────────────────────────────── */
+
+.welcome {
+  /* Padding lives on the form, so a click on the dialog element itself means the backdrop. */
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+}
+.welcome::backdrop { background: rgba(28, 27, 34, 0.55); }
+.welcome form { padding: 28px 28px 24px; }
+.welcome p { margin: 0 0 14px; line-height: 1.55; }
+.welcome-kicker {
+  font: 600 0.75rem/1 var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 6px !important;
+}
+.welcome-title { font: 700 2rem/1.1 var(--serif); margin: 0 0 18px; letter-spacing: -0.015em; }
+.welcome-list { margin: 0 0 22px; padding-left: 18px; }
+.welcome-list li { margin-bottom: 8px; line-height: 1.5; }
+.welcome-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.welcome-actions a { color: var(--link); }
+.welcome-primary {
+  font: 700 0.95rem/1 var(--sans);
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text);
+  color: var(--bg);
+  cursor: pointer;
+}
+.welcome-primary:hover { background: var(--link); }
+@media (prefers-reduced-motion: no-preference) {
+  .welcome[open] { animation: welcome-in 0.18s ease-out; }
+  @keyframes welcome-in { from { opacity: 0; transform: translateY(8px); } }
+}
+
+/* ── about page ───────────────────────────────────────── */
+
+.prose { max-width: 680px; padding-top: 28px; font-size: 1.05rem; line-height: 1.65; }
+.prose h1 { font: 700 2.2rem/1.15 var(--serif); margin: 0 0 14px; letter-spacing: -0.015em; }
+.prose h2 { font: 700 1.35rem/1.25 var(--serif); margin: 36px 0 10px; }
+.prose a { color: var(--link); }
+.prose ul { padding-left: 20px; }
+.prose li { margin-bottom: 10px; }
+.lede { font-size: 1.18rem; color: var(--text); }
+.about-sections { margin: 16px 0 0; }
+.about-sections dt { font-weight: 700; margin-top: 12px; }
+.about-sections dt a { color: var(--text); }
+.about-sections .count { font-weight: 500; color: var(--muted); font-size: 0.85rem; margin-left: 4px; }
+.about-sections dd { margin: 2px 0 0; color: var(--muted); }
+.prose .badge { vertical-align: 2px; }
+.muted-note { color: var(--muted); font-size: 0.9rem; margin-top: 36px; }

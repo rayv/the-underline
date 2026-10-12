@@ -1,12 +1,19 @@
 ---
-// Topic filter chips; behavior lives in src/scripts/filters.ts. Hidden without JavaScript.
+// Listing filters: Today's News vs All News, plus topic chips. Behavior lives in src/scripts/filters.ts.
+// Hidden without JavaScript.
 import { TOPICS } from '../lib/topics.ts';
 ---
 
-<div class="filter-bar" role="group" aria-label="Filter by topic">
-  <span class="filter-label">Topics</span>
-  {TOPICS.map((t) => (
-    <button type="button" class="chip" data-topic={t.slug} aria-pressed="false" title={t.blurb}>{t.label}</button>
-  ))}
-  <button type="button" class="chip-clear" hidden>Clear</button>
+<div class="filter-bar">
+  <div class="when-toggle" role="group" aria-label="Time range">
+    <button type="button" class="when-btn" data-when="all" aria-pressed="true">All news</button>
+    <button type="button" class="when-btn" data-when="today" aria-pressed="false" title="This morning's edition: everything from the 24 hours before the latest refresh">Today's news</button>
+  </div>
+  <div class="topic-chips" role="group" aria-label="Filter by topic">
+    <span class="filter-label">Topics</span>
+    {TOPICS.map((t) => (
+      <button type="button" class="chip" data-topic={t.slug} aria-pressed="false" title={t.blurb}>{t.label}</button>
+    ))}
+    <button type="button" class="chip-clear" hidden>Clear</button>
+  </div>
 </div>

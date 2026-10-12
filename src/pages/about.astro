@@ -1,0 +1,78 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { CATEGORIES, CATEGORY_KEYS, SOURCES, paths } from '../lib/sources.ts';
+import { TOPICS } from '../lib/topics.ts';
+
+const countByCategory = Object.fromEntries(CATEGORY_KEYS.map((c) => [c, SOURCES.filter((s) => s.category === c).length]));
+---
+
+<Layout title="About" active="about">
+  <article class="prose">
+    <h1>About The Underline</h1>
+    <p class="lede">
+      The Underline gathers news from across higher education and ed tech into one place: trade press, vendor
+      newsrooms, researchers, associations, and the people writing about the field. It's for anyone who wants to keep up
+      without checking dozens of sites.
+    </p>
+
+    <h2>What's here</h2>
+    <p>
+      Headlines from <a href="/sources/">{SOURCES.length} sources</a>, newest first. Each headline links to the original
+      article, usually with the publisher's own short summary. The site doesn't host or rewrite anyone's work.
+    </p>
+    <dl class="about-sections">
+      {CATEGORY_KEYS.map((c) => (
+        <Fragment>
+          <dt><a href={paths.category(c)}>{CATEGORIES[c].label}</a> <span class="count">{countByCategory[c]}</span></dt>
+          <dd>{CATEGORIES[c].blurb}.</dd>
+        </Fragment>
+      ))}
+    </dl>
+
+    <h2>Finding what matters to you</h2>
+    <ul>
+      <li>
+        <strong>Topics.</strong> Filter any section by{' '}
+        {TOPICS.map((t, i) => <Fragment>{i > 0 && (i === TOPICS.length - 1 ? ', or ' : ', ')}<mark>{t.label}</mark></Fragment>)}.
+        Choose more than one to see headlines from any of them. Your choice stays on as you move around the site.
+      </li>
+      <li><strong>Today's news</strong> shows only this morning's edition: everything published since the previous day's update.</li>
+      <li><strong>Search</strong> covers every headline from the last 90 days.</li>
+      <li>
+        <strong>Badges.</strong> <span class="badge badge-new">New</span> marks headlines that arrived since your last
+        visit. <span class="badge badge-major">Major</span> flags big news, such as acquisitions, breaches, layoffs, and
+        lawsuits, for its first two days.
+      </li>
+      <li><strong>Highlights.</strong> The names of major platforms and organizations, like Canvas, D2L, Ellucian, and EDUCAUSE, are highlighted in headlines so they're easy to spot.</li>
+    </ul>
+
+    <h2>Take it with you</h2>
+    <p>
+      Every section, topic, and source has its own RSS feed. Look for the RSS link at the bottom of any page, or start
+      with <a href="/rss.xml">everything</a>. To follow the original publishers directly, import{' '}
+      <a href="/sources.opml">the full source list (OPML)</a> into your feed reader.
+    </p>
+
+    <h2>How it works</h2>
+    <ul>
+      <li>The site updates once a day, early in the morning Pacific time, from the publishers' public RSS feeds.</li>
+      <li>Some vendors don't publish a feed. For those, <a href={paths.category('watch')}>Vendor Watch</a> follows their press coverage through Google News.</li>
+      <li>Headlines are sorted into topics automatically by keyword, so the occasional story will land in the wrong one.</li>
+      <li>There are no ads, accounts, or trackers. Your preferences (theme, filters, what you've seen) are stored only in your own browser.</li>
+    </ul>
+
+    <h2>Suggest a source</h2>
+    <p>
+      Know a feed that belongs here, or spot a mistake? <a href="https://github.com/rayv/the-underline/issues/new" target="_blank" rel="noopener">Open an issue on GitHub</a>.
+    </p>
+
+    <p class="muted-note">All content belongs to its publishers.</p>
+  </article>
+</Layout>
+
+<script>
+  // Reading this page covers what the welcome dialog says, so don't show it later.
+  try {
+    if (!localStorage.getItem('welcomed')) localStorage.setItem('welcomed', new Date().toISOString());
+  } catch {}
+</script>

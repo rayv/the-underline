@@ -3,6 +3,8 @@ import '../styles/global.css';
 import { CATEGORIES, CATEGORY_KEYS, SOURCES, paths, type Category } from '../lib/sources.ts';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TZ } from '../lib/format.ts';
 import { TOPICS } from '../lib/topics.ts';
+import { lastRefresh } from '../lib/queries.ts';
+import WelcomeDialog from '../components/WelcomeDialog.astro';
 
 interface Props {
   title?: string;
@@ -12,16 +14,19 @@ interface Props {
 }
 
 const { title, active = 'all', feedHref = '/rss.xml' } = Astro.props;
+// When the data was last refreshed; "Today's News" is everything in the 24 hours before this, or after.
+const refreshed = (lastRefresh() ?? new Date()).toISOString();
 const searchCategory = active in CATEGORIES ? (active as Category) : undefined;
 const tabs = [
   { key: 'all', href: paths.home(), label: 'All' },
   ...CATEGORY_KEYS.map((c) => ({ key: c, href: paths.category(c), label: CATEGORIES[c].label })),
   { key: 'sources', href: '/sources/', label: 'Sources' },
+  { key: 'about', href: '/about/', label: 'About' },
 ];
 ---
 
 <!doctype html>
-<html lang="en" data-tz={SITE_TZ}>
+<html lang="en" data-tz={SITE_TZ} data-refreshed={refreshed}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -36,10 +41,12 @@ const tabs = [
         const t = localStorage.getItem('theme');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
       } catch {}
-      // Hide the static list up front when topic filters will replace it, to avoid a flash.
+      // Hide the static list up front when filters will replace it, to avoid a flash.
       try {
-        const f = new URLSearchParams(location.search).get('topics') ?? localStorage.getItem('topics');
-        if (f) document.documentElement.dataset.filtering = '';
+        const q = new URLSearchParams(location.search);
+        const topics = q.get('topics') ?? localStorage.getItem('topics');
+        const when = q.get('when') ?? localStorage.getItem('when');
+        if (topics || when === 'today') document.documentElement.dataset.filtering = '';
       } catch {}
     </script>
   </head>
@@ -68,9 +75,10 @@ const tabs = [
       </nav>
     </header>
     <main class="wrap"><slot /></main>
+    {active !== 'about' && <WelcomeDialog />}
     <footer class="wrap footer">
       <p>{SITE_NAME} aggregates headlines from {SOURCES.length} publicly available feeds, refreshed daily. All content belongs to its publishers; every headline links to the original.</p>
-      <p><a href={feedHref}>RSS</a> · <a href="/sources.opml">OPML</a> · <a href="/items.json">JSON</a> · <a href="/sources/">Sources</a></p>
+      <p><a href="/about/">About</a> · <a href={feedHref}>RSS</a> · <a href="/sources.opml">OPML</a> · <a href="/items.json">JSON</a> · <a href="/sources/">Sources</a></p>
       <p>Topic pages and feeds: {TOPICS.map((t, i) => <Fragment>{i > 0 && ' · '}<a href={paths.topic(t.slug)}>{t.label}</a></Fragment>)}</p>
     </footer>
     <script>

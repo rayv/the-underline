@@ -1,13 +1,13 @@
 import { escapeHtml } from '../lib/marks.ts';
-import { loadIndex, maskFor, row } from './render.ts';
+import { loadIndex, row } from './render.ts';
 import { markItems, refreshTimes } from './page.ts';
-import { getSelectedTopics } from './filters.ts';
+import { applyFilters, describeFilters, getFilters, type Filters } from './filters.ts';
 
 const MAX_RESULTS = 100;
 
 const words = (s: string) => s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
 
-async function search(q: string, category: string, topics: string[]) {
+async function search(q: string, category: string, filters: Filters) {
   const status = document.getElementById('search-status')!;
   const list = document.getElementById('search-results')!;
   const terms = words(q);
@@ -23,18 +23,16 @@ async function search(q: string, category: string, topics: string[]) {
   }
 
   // Every query word must prefix-match some word in the headline, summary, source, or author.
-  const mask = maskFor(index, topics);
-  const matches = index.items.filter((item) => {
+  const matches = applyFilters(index, filters).filter((item) => {
     const source = index.sources[item.src];
     if (!source || (category && source.category !== category)) return false;
-    if (mask && (item.k & mask) === 0) return false;
     const hay = ` ${words(`${item.t} ${item.s ?? ''} ${source.name} ${item.a ?? ''}`).join(' ')}`;
     return terms.every((t) => hay.includes(` ${t}`));
   });
 
   const scope = [
     category && `in ${Object.values(index.sources).find((s) => s.category === category)?.categoryLabel}`,
-    topics.length && `about ${topics.map((t) => document.querySelector(`.chip[data-topic="${t}"]`)?.textContent ?? t).join(' or ')}`,
+    describeFilters(filters),
   ]
     .filter(Boolean)
     .join(' ');
@@ -64,6 +62,6 @@ export function runSearch() {
 
   document.getElementById('river-heading')!.textContent = `“${q}”`;
   document.title = `${q} · ${document.title}`;
-  search(q, category, getSelectedTopics());
-  document.addEventListener('topicschange', (e) => search(q, category, (e as CustomEvent<string[]>).detail));
+  search(q, category, getFilters());
+  document.addEventListener('filterschange', (e) => search(q, category, (e as CustomEvent<Filters>).detail));
 }

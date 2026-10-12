@@ -1,62 +1,102 @@
-// Topic filter chips (Higher Ed, Ed Tech, Student Success). Several can be on at once; an item shows if it's
-// in any selected topic. The selection follows the reader across pages (localStorage) and is mirrored into
-// the URL (?topics=a,b) so a filtered view can be shared. Static listings stay as built; when filters are on,
-// the list is rendered here from /search.json instead.
-import { dayGroups, loadIndex, maskFor } from './render.ts';
+// Listing filters: a time range (All news / Today's news) and topic chips (Higher Ed, Ed Tech, Student Success).
+// Topics combine: an item shows if it's in any selected topic. Both settings follow the reader across pages
+// (localStorage) and are mirrored into the URL (?when=today&topics=a,b) so a filtered view can be shared.
+// Static listings stay as built; when any filter is on, the list is rendered here from /search.json instead.
+import { dayGroups, loadIndex, maskFor, type IndexItem } from './render.ts';
 import { markItems, refreshTimes } from './page.ts';
+import type { SearchIndex } from '../pages/search.json.ts';
 
-const STORAGE_KEY = 'topics';
+export type When = 'all' | 'today';
+export interface Filters {
+  when: When;
+  topics: string[];
+}
+
 const PAGE = 50;
+const DAY_MS = 86_400_000;
 
 const chips = () => [...document.querySelectorAll<HTMLButtonElement>('.chip[data-topic]')];
-const knownTopics = () => chips().map((c) => c.dataset.topic!);
+const whenButtons = () => [...document.querySelectorAll<HTMLButtonElement>('.when-btn')];
 
-export function getSelectedTopics(): string[] {
-  let raw: string | null = new URLSearchParams(location.search).get('topics');
-  if (raw === null) {
-    try {
-      raw = localStorage.getItem(STORAGE_KEY);
-    } catch {}
-  }
-  const known = knownTopics();
-  return (raw ?? '').split(',').filter((t) => known.includes(t));
-}
-
-function setSelectedTopics(topics: string[], notify = true) {
+function stored(key: string): string | null {
+  const fromUrl = new URLSearchParams(location.search).get(key);
+  if (fromUrl !== null) return fromUrl;
   try {
-    if (topics.length) localStorage.setItem(STORAGE_KEY, topics.join(','));
-    else localStorage.removeItem(STORAGE_KEY);
-  } catch {}
-  const url = new URL(location.href);
-  if (topics.length) url.searchParams.set('topics', topics.join(','));
-  else url.searchParams.delete('topics');
-  history.replaceState(null, '', url.href.replace(/%2C/g, ',')); // keep "?topics=a,b" readable
-  syncChips(topics);
-  if (notify) document.dispatchEvent(new CustomEvent('topicschange', { detail: topics }));
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
 }
 
-function syncChips(topics: string[]) {
-  for (const chip of chips()) chip.setAttribute('aria-pressed', String(topics.includes(chip.dataset.topic!)));
-  document.querySelector<HTMLElement>('.chip-clear')?.toggleAttribute('hidden', !topics.length);
-  if (topics.length) document.documentElement.dataset.filtering = '';
-  else delete document.documentElement.dataset.filtering;
+export function getFilters(): Filters {
+  const known = chips().map((c) => c.dataset.topic!);
+  return {
+    when: stored('when') === 'today' ? 'today' : 'all',
+    topics: (stored('topics') ?? '').split(',').filter((t) => known.includes(t)),
+  };
+}
+
+export const isFiltering = (f: Filters) => f.when === 'today' || f.topics.length > 0;
+
+/** "Today's news" = this morning's edition: published within 24 hours before the latest refresh, or after it. */
+export function todayCutoff(): number {
+  const refreshed = Date.parse(document.documentElement.dataset.refreshed ?? '') || Date.now();
+  return refreshed - DAY_MS;
+}
+
+/** Items passing the time range and topic filters (category and search terms are up to the caller). */
+export function applyFilters(index: SearchIndex, f: Filters): IndexItem[] {
+  const mask = maskFor(index, f.topics);
+  const cutoff = f.when === 'today' ? todayCutoff() : 0;
+  return index.items.filter((i) => (!mask || (i.k & mask) !== 0) && (!cutoff || Date.parse(i.p) >= cutoff));
 }
 
 const topicLabel = (slug: string) => chips().find((c) => c.dataset.topic === slug)?.textContent ?? slug;
-const describe = (topics: string[]) => topics.map(topicLabel).join(' or ');
 
-/** Re-render a filterable listing for the current selection. */
-async function renderRiver(river: HTMLElement, topics: string[]) {
+/** e.g. "from today's edition about Ed Tech or Student Success" */
+export function describeFilters(f: Filters): string {
+  return [f.when === 'today' && "from today's edition", f.topics.length && `about ${f.topics.map(topicLabel).join(' or ')}`]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function setFilters(f: Filters, notify = true) {
+  try {
+    if (f.when === 'today') localStorage.setItem('when', 'today');
+    else localStorage.removeItem('when');
+    if (f.topics.length) localStorage.setItem('topics', f.topics.join(','));
+    else localStorage.removeItem('topics');
+  } catch {}
+  const url = new URL(location.href);
+  if (f.when === 'today') url.searchParams.set('when', 'today');
+  else url.searchParams.delete('when');
+  if (f.topics.length) url.searchParams.set('topics', f.topics.join(','));
+  else url.searchParams.delete('topics');
+  history.replaceState(null, '', url.href.replace(/%2C/g, ',')); // keep "?topics=a,b" readable
+  syncControls(f);
+  if (notify) document.dispatchEvent(new CustomEvent<Filters>('filterschange', { detail: f }));
+}
+
+function syncControls(f: Filters) {
+  for (const chip of chips()) chip.setAttribute('aria-pressed', String(f.topics.includes(chip.dataset.topic!)));
+  for (const btn of whenButtons()) btn.setAttribute('aria-pressed', String(btn.dataset.when === f.when));
+  document.querySelector<HTMLElement>('.chip-clear')?.toggleAttribute('hidden', !f.topics.length);
+  if (isFiltering(f)) document.documentElement.dataset.filtering = '';
+  else delete document.documentElement.dataset.filtering;
+}
+
+/** Re-render a filterable listing for the current filters. */
+async function renderRiver(river: HTMLElement, f: Filters) {
   const status = river.querySelector<HTMLElement>('.filter-status')!;
   const target = river.querySelector<HTMLElement>('.river-filtered')!;
-  if (!topics.length) {
+  if (!isFiltering(f)) {
     status.hidden = target.hidden = true;
     target.innerHTML = '';
     return;
   }
   status.hidden = false;
   status.textContent = 'Filtering…';
-  let index;
+  let index: SearchIndex;
   try {
     index = await loadIndex();
   } catch {
@@ -64,11 +104,10 @@ async function renderRiver(river: HTMLElement, topics: string[]) {
     return;
   }
   const category = river.dataset.category;
-  const mask = maskFor(index, topics);
-  const matches = index.items.filter((i) => (i.k & mask) !== 0 && (!category || index.sources[i.src]?.category === category));
+  const matches = applyFilters(index, f).filter((i) => !category || index.sources[i.src]?.category === category);
 
-  const feed = topics.length === 1 ? ` <a href="/topics/${topics[0]}/rss.xml">RSS</a>` : '';
-  status.innerHTML = `${matches.length} headline${matches.length === 1 ? '' : 's'} about ${describe(topics)}.${feed}`;
+  const feed = f.topics.length === 1 && f.when === 'all' ? ` <a href="/topics/${f.topics[0]}/rss.xml">RSS</a>` : '';
+  status.innerHTML = `${matches.length} headline${matches.length === 1 ? '' : 's'} ${describeFilters(f)}.${feed}`;
 
   let shown = 0;
   const more = document.createElement('button');
@@ -86,27 +125,31 @@ async function renderRiver(river: HTMLElement, topics: string[]) {
   more.addEventListener('click', showMore);
   target.hidden = false;
   showMore();
-  if (!matches.length) target.innerHTML = '<p class="empty">Nothing here matches those topics yet.</p>';
+  if (!matches.length) {
+    target.innerHTML = `<p class="empty">${f.when === 'today' ? 'Nothing new here in today’s edition.' : 'Nothing here matches those topics yet.'}</p>`;
+  }
 }
 
 export function initFilters() {
   if (!chips().length) return;
-  const topics = getSelectedTopics();
-  // Keep the URL and storage in step with what's shown (e.g. a selection carried over from another page).
-  setSelectedTopics(topics, false);
+  // Normalize the URL and storage to what's shown (e.g. a selection carried over from another page).
+  setFilters(getFilters(), false);
 
   for (const chip of chips()) {
     chip.addEventListener('click', () => {
-      const current = getSelectedTopics();
+      const f = getFilters();
       const t = chip.dataset.topic!;
-      setSelectedTopics(current.includes(t) ? current.filter((x) => x !== t) : [...current, t]);
+      setFilters({ ...f, topics: f.topics.includes(t) ? f.topics.filter((x) => x !== t) : [...f.topics, t] });
     });
   }
-  document.querySelector('.chip-clear')?.addEventListener('click', () => setSelectedTopics([]));
+  for (const btn of whenButtons()) {
+    btn.addEventListener('click', () => setFilters({ ...getFilters(), when: btn.dataset.when as When }));
+  }
+  document.querySelector('.chip-clear')?.addEventListener('click', () => setFilters({ ...getFilters(), topics: [] }));
 
   const river = document.querySelector<HTMLElement>('.river[data-filterable]');
   if (river) {
-    renderRiver(river, topics);
-    document.addEventListener('topicschange', (e) => renderRiver(river, (e as CustomEvent<string[]>).detail));
+    renderRiver(river, getFilters());
+    document.addEventListener('filterschange', (e) => renderRiver(river, (e as CustomEvent<Filters>).detail));
   }
 }

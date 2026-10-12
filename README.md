@@ -83,6 +83,7 @@ Search also runs in the browser, against `/search.json`.
 | `/source/<id>/` | One source |
 | `/topics/<slug>/` (+ `page/N/`) | A topic page: `higher-ed`, `ed-tech` or `student-success` |
 | `/sources/` | Every source, with its health and latest item |
+| `/about/` | What the site is and how to use it |
 | `/search/?q=…&category=…` | Search |
 | `/rss.xml`, `/<section>/rss.xml`, `/source/<id>/rss.xml`, `/topics/<slug>/rss.xml` | RSS feeds |
 | `/sources.opml` | All source feeds, for import into a feed reader |
@@ -119,7 +120,7 @@ There are three topics, defined in `src/lib/topics.ts`:
 
 They show up in two places:
 
-- **Filter chips** on the main river, every section and search. Chips combine: choosing more than one shows headlines in *any* of the selected topics. The selection follows the reader from page to page (it's stored in their browser), and it's mirrored in the URL (`?topics=higher-ed,student-success`) so a filtered view can be shared. With filters on, the page renders the list in the browser from `/search.json` instead of showing the static list.
+- **Filter chips** on the main river, every section and search, next to an **All news / Today's news** switch. "Today's news" means this morning's edition: everything published in the 24 hours before the latest refresh, or after it. The refresh time is stamped on each page as `data-refreshed`. Topic chips combine: choosing more than one shows headlines in *any* of the selected topics. The selection follows the reader from page to page (it's stored in their browser), and it's mirrored in the URL (`?when=today&topics=higher-ed,student-success`) so a filtered view can be shared. With filters on, the page renders the list in the browser from `/search.json` instead of showing the static list.
 - **Topic pages** at `/topics/<slug>/`, each with its own RSS feed. They're linked from the footer.
 
 Each item's topics are decided at build time. Whichever rule applies first wins:
@@ -129,6 +130,10 @@ Each item's topics are decided at build time. Whichever rule applies first wins:
 3. Otherwise, it's in if its title or summary matches `pattern`, using whole-word matches.
 
 Before shipping a rule change, check which headlines it catches. Bare "retention" mostly caught staff and data retention, and "governance" caught "AI data governance". Both now need a narrower context.
+
+## Welcome dialog
+
+On a reader's first page view, a dialog explains the site (`src/components/WelcomeDialog.astro`). Dismissing it is remembered in `localStorage` (`welcomed`), and visiting `/about/` counts as having seen it. If storage is unavailable, the dialog never shows, rather than showing on every page.
 
 ## Quiet sources
 

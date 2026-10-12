@@ -1,0 +1,43 @@
+---
+// Shown once per browser, on the first page view (not on /about/). Dismissal is remembered in localStorage;
+// if storage is unavailable the dialog never shows, rather than showing on every page.
+import { SOURCES } from '../lib/sources.ts';
+---
+
+<dialog class="welcome" id="welcome" aria-labelledby="welcome-title">
+  <form method="dialog">
+    <p class="welcome-kicker">Welcome to</p>
+    <h2 id="welcome-title" class="welcome-title">The <span class="brand-underline">Underline</span></h2>
+    <p>
+      Every morning, The Underline collects headlines from {SOURCES.length} sources across higher ed and ed tech: news
+      outlets, vendor newsrooms, researchers, and the people writing about the field. Everything is in one stream, and
+      every headline links to the original.
+    </p>
+    <ul class="welcome-list">
+      <li><strong>Browse by section:</strong> News, Vendors, Vendor Watch, Voices, and Orgs &amp; Research.</li>
+      <li><strong>Filter by topic:</strong> <mark>Higher Ed</mark>, <mark>Ed Tech</mark>, or <mark>Student Success</mark>. Choose more than one to combine them.</li>
+      <li><strong>Switch to Today's news</strong> to see only this morning's edition.</li>
+      <li><strong>Take it with you:</strong> every section, topic, and source has an RSS feed.</li>
+    </ul>
+    <div class="welcome-actions">
+      <button type="submit" class="welcome-primary" autofocus>Start reading</button>
+      <a href="/about/">More about the site</a>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('welcome') as HTMLDialogElement | null;
+  let firstVisit = false;
+  try {
+    firstVisit = !localStorage.getItem('welcomed');
+    if (firstVisit) localStorage.setItem('welcomed', new Date().toISOString());
+  } catch {}
+  if (dialog && firstVisit) {
+    dialog.showModal();
+    // Clicking the backdrop (outside the dialog box) closes it too.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+  }
+</script>
