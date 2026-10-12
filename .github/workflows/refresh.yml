@@ -66,8 +66,10 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
 
+      # --no-build: upload the dist/ built above. Without it, the CLI reruns netlify.toml's build command
+      # in this step, without SITE_URL, and deploys that instead.
       - name: Deploy to Netlify
-        run: npx --yes netlify-cli@latest deploy --prod --dir=dist --message "Daily refresh ${{ github.run_id }}"
+        run: npx --yes netlify-cli@latest deploy --prod --no-build --dir=dist --message "Daily refresh ${{ github.run_id }}"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
