@@ -16,7 +16,6 @@ const searchCategory = active in CATEGORIES ? (active as Category) : undefined;
 const tabs = [
   { key: 'all', href: paths.home(), label: 'All' },
   ...CATEGORY_KEYS.map((c) => ({ key: c, href: paths.category(c), label: CATEGORIES[c].label })),
-  ...TOPICS.map((t) => ({ key: `topic:${t.slug}`, href: paths.topic(t.slug), label: t.label })),
   { key: 'sources', href: '/sources/', label: 'Sources' },
 ];
 ---
@@ -32,9 +31,15 @@ const tabs = [
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline>
       // Apply a saved theme before first paint to avoid a flash of the wrong one.
+      document.documentElement.classList.add('js');
       try {
         const t = localStorage.getItem('theme');
         if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch {}
+      // Hide the static list up front when topic filters will replace it, to avoid a flash.
+      try {
+        const f = new URLSearchParams(location.search).get('topics') ?? localStorage.getItem('topics');
+        if (f) document.documentElement.dataset.filtering = '';
       } catch {}
     </script>
   </head>
@@ -66,10 +71,13 @@ const tabs = [
     <footer class="wrap footer">
       <p>{SITE_NAME} aggregates headlines from {SOURCES.length} publicly available feeds, refreshed daily. All content belongs to its publishers; every headline links to the original.</p>
       <p><a href={feedHref}>RSS</a> · <a href="/sources.opml">OPML</a> · <a href="/items.json">JSON</a> · <a href="/sources/">Sources</a></p>
+      <p>Topic pages and feeds: {TOPICS.map((t, i) => <Fragment>{i > 0 && ' · '}<a href={paths.topic(t.slug)}>{t.label}</a></Fragment>)}</p>
     </footer>
     <script>
       import { initPage } from '../scripts/page.ts';
+      import { initFilters } from '../scripts/filters.ts';
       initPage();
+      initFilters();
     </script>
   </body>
 </html>

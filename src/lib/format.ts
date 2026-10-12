@@ -1,4 +1,5 @@
 import type { Item } from './queries.ts';
+export { escapeHtml, markedTitle } from './marks.ts';
 
 export const SITE_NAME = 'The Underline';
 export const SITE_DESCRIPTION =
@@ -16,9 +17,6 @@ export function hostname(url: string): string {
   }
 }
 
-export function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-}
 
 /** Calendar date in the site timezone, e.g. "2026-10-09". */
 export const dayKey = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: SITE_TZ });
@@ -37,18 +35,6 @@ export function groupByDay(items: Item[]): { key: string; label: string; items: 
     groups.at(-1)!.items.push(item);
   }
   return groups;
-}
-
-// Tracked names get a highlighter mark in headlines. Only the first match is marked, so it stays a mark, not a fill.
-const TRACKED =
-  /\b(Instructure|Canvas|D2L|Brightspace|Ellucian|Anthology|Blackboard|Unizin|Moodle|Turnitin|1EdTech|Coursera|EDUCAUSE|Kaltura|Workday)\b/i;
-
-/** Headline as HTML with the first tracked name wrapped in <mark>. */
-export function markedTitle(title: string): string {
-  const m = TRACKED.exec(title);
-  if (!m) return escapeHtml(title);
-  const end = m.index + m[0].length;
-  return `${escapeHtml(title.slice(0, m.index))}<mark>${escapeHtml(m[0])}</mark>${escapeHtml(title.slice(end))}`;
 }
 
 // Tomato is reserved for major news: big-deal keywords in a News or Vendor Watch headline.

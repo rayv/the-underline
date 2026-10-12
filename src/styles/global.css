@@ -407,3 +407,55 @@ a.muted:hover { color: var(--link); }
 
 /* Single-column pages (search) */
 .layout-single { grid-template-columns: minmax(0, 1fr); max-width: 780px; }
+
+/* ── topic filters ────────────────────────────────────── */
+
+.filter-bar { display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; }
+html.js .filter-bar { display: flex; }
+.filter-label {
+  font: 600 0.72rem/1 var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-right: 2px;
+}
+.chip {
+  font: 600 0.84rem/1 var(--sans);
+  padding: 7px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--muted); }
+/* A selected chip is "highlighted", in the literal sense. */
+.chip[aria-pressed="true"] { background: var(--highlighter); border-color: var(--highlighter); color: var(--ink); }
+.chip-clear {
+  font: 500 0.84rem/1 var(--sans);
+  padding: 7px 4px;
+  border: 0;
+  background: none;
+  color: var(--link);
+  cursor: pointer;
+}
+.chip-clear:hover { text-decoration: underline; text-underline-offset: 2px; }
+.chip-clear[hidden] { display: none; }
+
+.filter-status { margin-top: 12px; }
+.filter-status a { color: var(--link); }
+
+/* While filters are on, the filtered list replaces the static one (including its pager). */
+html[data-filtering] .river[data-filterable] .river-static { display: none; }
+
+.more-btn {
+  display: block;
+  margin: 20px 0 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 600 1rem var(--sans);
+  color: var(--link);
+  cursor: pointer;
+}
+.more-btn:hover { text-decoration: underline; text-underline-offset: 3px; }

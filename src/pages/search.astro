@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import FilterBar from '../components/FilterBar.astro';
 ---
 
 <Layout title="Search" active="search">
@@ -7,6 +8,7 @@ import Layout from '../layouts/Layout.astro';
     <section class="river" aria-labelledby="river-heading">
       <div class="river-head">
         <h1 id="river-heading">Search</h1>
+        <FilterBar />
         <p class="blurb" id="search-status" aria-live="polite">Type in the search box to find headlines from the last 90 days.</p>
       </div>
       <ol class="items" id="search-results"></ol>

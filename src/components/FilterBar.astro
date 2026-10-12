@@ -1,0 +1,12 @@
+---
+// Topic filter chips; behavior lives in src/scripts/filters.ts. Hidden without JavaScript.
+import { TOPICS } from '../lib/topics.ts';
+---
+
+<div class="filter-bar" role="group" aria-label="Filter by topic">
+  <span class="filter-label">Topics</span>
+  {TOPICS.map((t) => (
+    <button type="button" class="chip" data-topic={t.slug} aria-pressed="false" title={t.blurb}>{t.label}</button>
+  ))}
+  <button type="button" class="chip-clear" hidden>Clear</button>
+</div>

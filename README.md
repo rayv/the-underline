@@ -81,7 +81,7 @@ Search also runs in the browser, against `/search.json`.
 | `/`, `/page/N/` | All headlines |
 | `/news/`, `/vendors/`, `/vendor-watch/`, `/voices/`, `/orgs/` (+ `page/N/`) | Sections |
 | `/source/<id>/` | One source |
-| `/topics/student-success/` (+ `page/N/`) | A topic: matching headlines from every section |
+| `/topics/<slug>/` (+ `page/N/`) | A topic page: `higher-ed`, `ed-tech` or `student-success` |
 | `/sources/` | Every source, with its health and latest item |
 | `/search/?q=…&category=…` | Search |
 | `/rss.xml`, `/<section>/rss.xml`, `/source/<id>/rss.xml`, `/topics/<slug>/rss.xml` | RSS feeds |
@@ -109,16 +109,26 @@ One-time setup:
 
 See [docs/netlify-migration.md](docs/netlify-migration.md) for why the site is built this way.
 
-## Topics
+## Topics and filters
 
-A topic is a page that collects headlines from across all sections. Topics are defined in `src/lib/topics.ts`. A headline belongs to a topic if either:
+There are three topics, defined in `src/lib/topics.ts`:
 
-- its source is listed in the topic's `sources` (for sources that cover only that topic), or
-- its title or summary matches the topic's `pattern`.
+- **Higher Ed**: institutional topics such as policy, funding, enrollment, governance and labor.
+- **Ed Tech**: tools, platforms and AI.
+- **Student Success**: retention, completion, advising and basic needs.
 
-To add a topic, add an entry there. It gets a tab, a page, and an RSS feed automatically.
+They show up in two places:
 
-Keyword rules need tuning. Before shipping a new or changed rule, review which headlines it catches. For example, bare "retention" mostly caught staff and data retention stories, so the Student Success rule requires a student context.
+- **Filter chips** on the main river, every section and search. Chips combine: choosing more than one shows headlines in *any* of the selected topics. The selection follows the reader from page to page (it's stored in their browser), and it's mirrored in the URL (`?topics=higher-ed,student-success`) so a filtered view can be shared. With filters on, the page renders the list in the browser from `/search.json` instead of showing the static list.
+- **Topic pages** at `/topics/<slug>/`, each with its own RSS feed. They're linked from the footer.
+
+Each item's topics are decided at build time. Whichever rule applies first wins:
+
+1. If the item's section is in `excludeCategories`, or it matches `exclude`, it's out. For example, Higher Ed excludes vendor posts and K-12 stories.
+2. If its section is in `categories`, or its source is in `sources`, it's in. For example, every vendor post counts as Ed Tech.
+3. Otherwise, it's in if its title or summary matches `pattern`, using whole-word matches.
+
+Before shipping a rule change, check which headlines it catches. Bare "retention" mostly caught staff and data retention, and "governance" caught "AI data governance". Both now need a narrower context.
 
 ## Quiet sources
 

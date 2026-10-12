@@ -2,15 +2,19 @@ import type { APIRoute } from 'astro';
 import { getItems } from '../lib/queries.ts';
 import { CATEGORIES, SOURCES } from '../lib/sources.ts';
 import { hostname, isMajorCandidate } from '../lib/format.ts';
+import { TOPICS, topicMask } from '../lib/topics.ts';
 
 export interface SearchIndex {
+  /** Topic slugs in bit order: item.k has bit i set if the item is in topics[i]. */
+  topics: string[];
   sources: Record<string, { name: string; category: string; categoryLabel: string; href: string }>;
-  items: { t: string; u: string; s: string | null; a: string | null; src: string; p: string; f: string; m?: 1; h?: string }[];
+  items: { t: string; u: string; s: string | null; a: string | null; src: string; p: string; f: string; k: number; m?: 1; h?: string }[];
 }
 
-// Compact index of every item for client-side search on /search/.
+// Compact index of every item, for client-side search and topic filters.
 export const GET: APIRoute = () => {
   const index: SearchIndex = {
+    topics: TOPICS.map((t) => t.slug),
     sources: Object.fromEntries(
       SOURCES.map((s) => [
         s.id,
@@ -25,6 +29,7 @@ export const GET: APIRoute = () => {
       src: i.source.id,
       p: i.publishedAt.toISOString(),
       f: i.fetchedAt.toISOString(),
+      k: topicMask(i),
       ...(isMajorCandidate(i) ? { m: 1 as const } : {}),
       ...(i.source.category !== 'watch' ? { h: hostname(i.url) } : {}),
     })),

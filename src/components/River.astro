@@ -1,5 +1,6 @@
 ---
 import ItemRow from './ItemRow.astro';
+import FilterBar from './FilterBar.astro';
 import type { Item } from '../lib/queries.ts';
 import { activeSourceIds, lastRefresh } from '../lib/queries.ts';
 import type { Topic } from '../lib/topics.ts';
@@ -36,10 +37,12 @@ const sidebarSources = SOURCES.filter(
 );
 const sidebarLabel = topic?.label ?? (sidebarCategory ? CATEGORIES[sidebarCategory].label : 'All');
 const refreshed = lastRefresh();
+// Topic chips apply to the full river and sections; source and topic pages are already narrow.
+const filterable = !sourceId && !topic;
 ---
 
 <div class="layout">
-  <section class="river" aria-labelledby="river-heading">
+  <section class="river" aria-labelledby="river-heading" data-filterable={filterable ? '' : undefined} data-category={category}>
     <div class="river-head">
       <h1 id="river-heading">{heading}</h1>
       {source ? (
@@ -51,7 +54,15 @@ const refreshed = lastRefresh();
       ) : (
         <p class="blurb">{blurb}</p>
       )}
+      {filterable && <FilterBar />}
     </div>
+    {filterable && (
+      <Fragment>
+        <p class="filter-status blurb" aria-live="polite" hidden></p>
+        <div class="river-filtered" hidden></div>
+      </Fragment>
+    )}
+    <div class="river-static">
     {groups.length ? (
       groups.map((g) => (
         <Fragment>
@@ -70,6 +81,7 @@ const refreshed = lastRefresh();
         {page < pageCount && <a href={pageHref(page + 1)}>Older →</a>}
       </nav>
     )}
+    </div>
   </section>
   <aside class="sidebar" aria-label="Sources">
     <h2>{sidebarLabel} sources</h2>
