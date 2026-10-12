@@ -1,0 +1,17 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Layout from '../../layouts/Layout.astro';
+import River from '../../components/River.astro';
+import { getItems } from '../../lib/queries.ts';
+import { CATEGORIES, CATEGORY_KEYS } from '../../lib/sources.ts';
+
+export const getStaticPaths = (() =>
+  CATEGORY_KEYS.map((category) => ({ params: { category: CATEGORIES[category].slug }, props: { category } }))) satisfies GetStaticPaths;
+
+const { category } = Astro.props;
+const items = getItems({ category });
+---
+
+<Layout title={CATEGORIES[category].label} active={category} feedHref={`/${CATEGORIES[category].slug}/rss.xml`}>
+  <River items={items} category={category} />
+</Layout>

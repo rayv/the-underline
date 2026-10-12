@@ -1,0 +1,7 @@
+# This site is built and deployed by GitHub Actions (.github/workflows/refresh.yml), because the build
+# needs the SQLite history in data/news.db, which Netlify's own builds don't have.
+# `ignore = "exit 0"` tells Netlify to skip any git-triggered builds; CLI deploys from Actions still work.
+[build]
+  publish = "dist"
+  command = "npm run build"
+  ignore = "exit 0"

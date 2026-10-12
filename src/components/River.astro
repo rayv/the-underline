@@ -1,0 +1,73 @@
+---
+import ItemRow from './ItemRow.astro';
+import type { Item } from '../lib/queries.ts';
+import { lastRefresh } from '../lib/queries.ts';
+import { CATEGORIES, SOURCES, SOURCE_BY_ID, paths, type Category } from '../lib/sources.ts';
+import { MAX_PAGES, PAGE_SIZE, groupByDay, hostname, pageSlice, shortDateTime } from '../lib/format.ts';
+
+interface Props {
+  items: Item[];
+  page?: number;
+  category?: Category;
+  sourceId?: string;
+}
+
+const { items, page = 1, category, sourceId } = Astro.props;
+const source = sourceId ? SOURCE_BY_ID.get(sourceId) : undefined;
+const pageCount = sourceId ? 1 : Math.min(MAX_PAGES, Math.ceil(items.length / PAGE_SIZE));
+const shown = sourceId ? items : pageSlice(items, page);
+const groups = groupByDay(shown);
+const pageHref = (n: number) => (category ? paths.category(category, n) : paths.home(n));
+
+const heading = source?.name ?? (category ? CATEGORIES[category].label : 'Latest');
+const blurb = source ? '' : category ? CATEGORIES[category].blurb : 'Everything from every source, newest first.';
+const sidebarCategory = category ?? source?.category;
+const sidebarSources = SOURCES.filter((s) => !sidebarCategory || s.category === sidebarCategory);
+const refreshed = lastRefresh();
+---
+
+<div class="layout">
+  <section class="river" aria-labelledby="river-heading">
+    <div class="river-head">
+      <h1 id="river-heading">{heading}</h1>
+      {source ? (
+        <p class="blurb">
+          <a href={source.site} target="_blank" rel="noopener">{hostname(source.site)}</a> ·
+          <a href={paths.category(source.category)}>{CATEGORIES[source.category].label}</a> ·
+          <a href={source.feed} target="_blank" rel="noopener">Original feed</a>
+        </p>
+      ) : (
+        <p class="blurb">{blurb}</p>
+      )}
+    </div>
+    {groups.length ? (
+      groups.map((g) => (
+        <Fragment>
+          <h2 class="day" data-day={g.key}>{g.label}</h2>
+          <ol class="items">
+            {g.items.map((item) => <ItemRow item={item} showCategory={!category && !sourceId} />)}
+          </ol>
+        </Fragment>
+      ))
+    ) : (
+      <p class="empty">Nothing here yet. Feeds refresh daily.</p>
+    )}
+    {pageCount > 1 && (
+      <nav class="pager" aria-label="Pagination">
+        {page > 1 ? <a href={pageHref(page - 1)}>← Newer</a> : <span />}
+        {page < pageCount && <a href={pageHref(page + 1)}>Older →</a>}
+      </nav>
+    )}
+  </section>
+  <aside class="sidebar" aria-label="Sources">
+    <h2>{sidebarCategory ? CATEGORIES[sidebarCategory].label : 'All'} sources</h2>
+    <ul class="source-list">
+      {sidebarSources.map((s) => (
+        <li><a href={paths.source(s.id)} class:list={{ 'is-active': s.id === sourceId }}>{s.name}</a></li>
+      ))}
+    </ul>
+    {refreshed && (
+      <p class="refreshed">Updated <time data-relative datetime={refreshed.toISOString()}>{shortDateTime(refreshed)}</time></p>
+    )}
+  </aside>
+</div>

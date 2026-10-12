@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Search" active="search">
+  <div class="layout layout-single">
+    <section class="river" aria-labelledby="river-heading">
+      <div class="river-head">
+        <h1 id="river-heading">Search</h1>
+        <p class="blurb" id="search-status" aria-live="polite">Type in the search box to find headlines from the last 90 days.</p>
+      </div>
+      <ol class="items" id="search-results"></ol>
+      <noscript><p class="empty">Search needs JavaScript.</p></noscript>
+    </section>
+  </div>
+</Layout>
+
+<script>
+  import { runSearch } from '../scripts/search.ts';
+  runSearch();
+</script>

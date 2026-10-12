@@ -1,0 +1,55 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { sourceStatuses } from '../lib/queries.ts';
+import { CATEGORIES, CATEGORY_KEYS, paths } from '../lib/sources.ts';
+import { hostname, shortDateTime } from '../lib/format.ts';
+
+const statuses = sourceStatuses();
+const healthy = statuses.filter((s) => s.lastSuccess && !s.lastError).length;
+---
+
+<Layout title="Sources" active="sources">
+  <div class="river-head">
+    <h1>Sources</h1>
+    <p class="blurb">
+      {statuses.length} feeds, {healthy} healthy on the last refresh. Subscribe to all of them in your own reader with
+      the <a href="/sources.opml">OPML file</a>.
+    </p>
+  </div>
+  {CATEGORY_KEYS.map((cat) => {
+    const rows = statuses.filter((s) => s.source.category === cat);
+    return (
+      <section class="source-group">
+        <h2 class="day">{CATEGORIES[cat].label} <span class="count">{rows.length}</span></h2>
+        <p class="blurb">{CATEGORIES[cat].blurb}</p>
+        <table class="sources">
+          <thead>
+            <tr><th scope="col">Source</th><th scope="col">Latest item</th><th scope="col" class="num">Items</th><th scope="col">Status</th></tr>
+          </thead>
+          <tbody>
+            {rows.map((s) => (
+              <tr>
+                <td>
+                  <a href={paths.source(s.source.id)}>{s.source.name}</a><br />
+                  <a class="muted" href={s.source.site} target="_blank" rel="noopener">{hostname(s.source.site)}</a>
+                </td>
+                <td>{s.latestItem ? <time data-relative datetime={s.latestItem.toISOString()}>{shortDateTime(s.latestItem)}</time> : <span class="muted">—</span>}</td>
+                <td class="num">{s.itemCount}</td>
+                <td>
+                  {s.lastError ? (
+                    <span class="status status-error" title={s.lastError}>Error</span>
+                  ) : s.lastSuccess ? (
+                    <span class="status status-ok">OK</span>
+                  ) : (
+                    <span class="status">Pending</span>
+                  )}
+                  <a class="muted" href={s.source.feed} target="_blank" rel="noopener">feed</a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    );
+  })}
+</Layout>

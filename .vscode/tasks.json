@@ -1,0 +1,99 @@
+{
+  // Run with ⇧⌘B (default build = astro build) or "Tasks: Run Task".
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "detail": "astro build → dist/ (uses the existing data/news.db)",
+      "type": "npm",
+      "script": "build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "refresh",
+      "detail": "Fetch feeds, then build: what the daily GitHub Action does, minus the deploy",
+      "type": "npm",
+      "script": "refresh",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "typecheck",
+      "detail": "astro check over .astro and .ts files",
+      "type": "npm",
+      "script": "typecheck",
+      "group": "build",
+      "problemMatcher": "$tsc",
+      "presentation": { "reveal": "silent", "clear": true }
+    },
+    {
+      "label": "dev",
+      "detail": "Astro dev server on :4321 with hot reload, reading data/news.db",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "astro",
+        "pattern": { "regexp": "^__never_matches__$" },
+        "background": { "activesBegin": "astro", "endsPattern": "(Local\\s+http|ready in)" }
+      },
+      "presentation": { "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "preview",
+      "detail": "Serve the built dist/ on :4321, as Netlify would",
+      "type": "npm",
+      "script": "preview",
+      "dependsOn": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "astro",
+        "pattern": { "regexp": "^__never_matches__$" },
+        "background": { "activesBegin": "astro", "endsPattern": "(Local\\s+http|ready in)" }
+      },
+      "presentation": { "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "fetch feeds",
+      "detail": "One fetch pass into data/news.db, with a per-source report",
+      "type": "npm",
+      "script": "fetch",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "check feeds",
+      "detail": "Verify that every registered feed parses (doesn't write to the DB)",
+      "type": "npm",
+      "script": "check-feeds",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "check feeds: one source",
+      "detail": "Verify feeds whose id contains the given text",
+      "type": "shell",
+      "command": "npm run check-feeds -- ${input:sourceId}",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "reset database",
+      "detail": "Move data/news.db to the Trash and fetch fresh",
+      "type": "shell",
+      "command": "trash data/news.db data/news.db-wal data/news.db-shm 2>/dev/null; npm run fetch",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sourceId",
+      "type": "promptString",
+      "description": "Source id (or part of one), e.g. d2l or gn-"
+    }
+  ]
+}

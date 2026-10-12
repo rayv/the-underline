@@ -1,0 +1,18 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Layout from '../../layouts/Layout.astro';
+import River from '../../components/River.astro';
+import { getItems } from '../../lib/queries.ts';
+import { pageNumbers } from '../../lib/format.ts';
+
+export const getStaticPaths = (() => {
+  const items = getItems();
+  return pageNumbers(items.length).map((page) => ({ params: { page: String(page) }, props: { items, page } }));
+}) satisfies GetStaticPaths;
+
+const { items, page } = Astro.props;
+---
+
+<Layout title={`Page ${page}`}>
+  <River items={items} page={page} />
+</Layout>

@@ -1,0 +1,73 @@
+# Daily refresh: fetch feeds into the SQLite history, build the static site, deploy to Netlify.
+# The database lives in the Actions cache between runs (see docs/netlify-migration.md).
+#
+# Required repo secrets: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
+# Optional repo variable: SITE_URL (e.g. https://theunderline.netlify.app), used for absolute RSS links.
+
+name: Refresh and deploy
+
+on:
+  schedule:
+    - cron: '0 13 * * *' # 13:00 UTC = 6 AM Pacific / 9 AM Eastern (daylight time)
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: refresh-deploy
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+
+      - run: npm ci
+
+      # Restore the newest database. Each run saves under a unique key, so restore-keys picks the latest.
+      - name: Restore database
+        id: restore-db
+        uses: actions/cache/restore@v4
+        with:
+          path: data/
+          key: news-db-${{ github.run_id }}
+          restore-keys: news-db-
+
+      - name: Note a missing database
+        if: steps.restore-db.outputs.cache-matched-key == ''
+        run: echo "::warning::No cached database found; starting fresh. History older than each feed's current items is lost."
+
+      - name: Fetch feeds
+        run: npm run fetch
+
+      - name: Save database
+        uses: actions/cache/save@v4
+        with:
+          path: data/
+          key: news-db-${{ github.run_id }}
+
+      # Backup copy in case the cache is evicted (e.g. after a week of failed runs).
+      - name: Upload database backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: news-db
+          path: data/news.db
+          retention-days: 30
+
+      - name: Build site
+        run: npm run build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+
+      - name: Deploy to Netlify
+        run: npx --yes netlify-cli@latest deploy --prod --dir=dist --message "Daily refresh ${{ github.run_id }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

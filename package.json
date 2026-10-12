@@ -1,0 +1,31 @@
+{
+  "name": "the-underline",
+  "version": "1.0.0",
+  "description": "Higher ed and ed tech news aggregator",
+  "scripts": {
+    "dev": "astro dev",
+    "fetch": "node src/lib/fetcher.ts",
+    "check-feeds": "node scripts/check-feeds.ts",
+    "typecheck": "astro check",
+    "build": "astro build",
+    "preview": "astro preview",
+    "refresh": "npm run fetch && npm run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "astro": "^7.3.8",
+    "rss-parser": "^3.13.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  }
+}

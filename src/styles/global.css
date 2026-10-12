@@ -1,0 +1,409 @@
+/* Palette: Paper, Ink, Highlighter (signature accent, used as a mark, never a fill),
+   Tomato (major news only), Slate blue (links and secondary UI). */
+:root {
+  --paper: #F6F3EC;
+  --ink: #1C1B22;
+  --highlighter: #F2D94E;
+  --tomato: #E4572E;
+  --slate: #3A5A8C;
+
+  /* Each token is light-dark(light, dark). The theme switcher pins color-scheme via data-theme. */
+  --bg: light-dark(var(--paper), var(--ink));
+  --surface: light-dark(#FBF9F4, #222129);
+  --text: light-dark(var(--ink), var(--paper));
+  --muted: light-dark(#6B6760, #A8A49B);
+  --rule: light-dark(#E2DDD1, #34333C);
+  --link: light-dark(var(--slate), #9DB4DD);
+  --focus: light-dark(var(--slate), #9DB4DD);
+  /* Light text over a full-strength yellow would lose contrast, so hover swipes are dimmed in dark mode. */
+  --swipe: light-dark(var(--highlighter), rgba(242, 217, 78, 0.38));
+  --mark-text: var(--ink);
+  --slate-soft: light-dark(#E6E9EE, #2A3040);
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color-scheme: light dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 var(--sans);
+}
+
+a { color: var(--link); }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+
+/* The highlighter swipe: a marker stroke that draws in under the text on hover. */
+.swipe,
+.item-title a,
+.source-list a,
+.footer a,
+.pager a,
+.river-head .blurb a {
+  text-decoration: none;
+  background-image: linear-gradient(var(--swipe), var(--swipe));
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: 0% 0.38em;
+  transition: background-size 0.22s ease-out;
+}
+.swipe:hover,
+.item-title a:hover,
+.source-list a:hover,
+.footer a:hover,
+.pager a:hover,
+.river-head .blurb a:hover {
+  background-size: 100% 0.38em;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* Marker highlight behind key words: slightly ragged ends so it reads as a pen stroke. */
+mark {
+  color: var(--mark-text);
+  background: linear-gradient(100deg, transparent 0.15em, var(--highlighter) 0.25em, var(--highlighter) calc(100% - 0.25em), transparent calc(100% - 0.12em));
+  padding: 0 0.22em;
+  margin: 0 -0.08em;
+  border-radius: 0.2em 0.35em 0.25em 0.3em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ── masthead ─────────────────────────────────────────── */
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.masthead-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 14px;
+  padding-bottom: 10px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.brand-mark { display: flex; }
+.brand-name {
+  font: 700 1.35rem/1 var(--serif);
+  letter-spacing: -0.01em;
+}
+/* The name is the logo: a highlighter stroke drawn just under the baseline. "Underline" has no descenders,
+   so the stroke never sits behind letters and works unchanged in both themes. */
+.brand-underline {
+  position: relative;
+  isolation: isolate;
+}
+.brand-underline::after {
+  content: '';
+  position: absolute;
+  left: -0.05em;
+  right: -0.08em;
+  bottom: -0.2em;
+  height: 0.24em;
+  background: var(--highlighter);
+  border-radius: 0.2em 0.4em 0.25em 0.35em;
+  transform: rotate(-0.8deg);
+  z-index: -1;
+}
+
+.search { margin-left: auto; flex: 0 1 320px; min-width: 0; }
+
+.theme-toggle {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.theme-toggle:hover { border-color: var(--muted); }
+.theme-toggle svg { width: 18px; height: 18px; }
+.theme-toggle .icon-sun { display: none; }
+.search input {
+  width: 100%;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 7px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+.search input::placeholder { color: var(--muted); }
+.search input:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  position: relative;
+  padding: 8px 10px 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.is-active { color: var(--text); font-weight: 600; }
+/* Active tab: a short highlighter stroke rather than a hard rule. */
+.tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 0.42em;
+  background: var(--highlighter);
+  border-radius: 0.2em 0.4em 0.25em 0.35em;
+  z-index: -1;
+}
+.tab.is-active { z-index: 0; isolation: isolate; }
+/* Dark-only layout tweaks. Each appears twice: once for the system preference, once for an explicit choice. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tab.is-active::after { height: 3px; bottom: 6px; border-radius: 2px; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+}
+:root[data-theme="dark"] .tab.is-active::after { height: 3px; bottom: 6px; border-radius: 2px; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+
+/* ── layout ───────────────────────────────────────────── */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 48px;
+  padding-top: 28px;
+}
+
+.river-head { padding-top: 28px; margin-bottom: 8px; }
+.layout .river-head { padding-top: 0; }
+.river-head h1 {
+  font: 700 2rem/1.15 var(--serif);
+  margin: 0 0 6px;
+  letter-spacing: -0.015em;
+}
+.blurb { color: var(--muted); margin: 0 0 4px; }
+
+.day {
+  font: 600 0.78rem/1 var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 32px 0 0;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid var(--text);
+}
+.day .count { font-weight: 500; margin-left: 4px; }
+
+.items { list-style: none; margin: 0; padding: 0; }
+
+.item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Major news: a tomato rule in the gutter plus the badge. */
+.item.is-major {
+  box-shadow: inset 3px 0 0 var(--tomato);
+  padding-left: 14px;
+}
+
+.item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.item-cat {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--link);
+  text-decoration: none;
+}
+.item-cat:hover { text-decoration: underline; text-underline-offset: 2px; }
+.item-source { font-weight: 600; color: var(--text); text-decoration: none; }
+.item-source:hover { color: var(--link); }
+.item-meta time { margin-left: auto; white-space: nowrap; }
+
+.badge {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  padding: 4px 6px 3px;
+  color: var(--ink);
+  border-radius: 0.2em 0.4em 0.25em 0.35em;
+}
+.badge-new { background: var(--highlighter); }
+/* Ink on tomato passes contrast (4.6:1); tomato text on paper would not, so tomato is only ever a fill or a rule. */
+.badge-major { background: var(--tomato); }
+.badge[hidden] { display: none; }
+
+.item-title {
+  font: 600 1.18rem/1.32 var(--serif);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.item-title a { color: var(--text); }
+.item-title a:visited { color: var(--muted); }
+.item-title a:visited mark { color: var(--mark-text); }
+
+.item-summary {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.item-host { display: block; margin-top: 4px; font-size: 0.75rem; color: var(--muted); }
+
+.empty { color: var(--muted); padding: 40px 0; }
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px 0 8px;
+  font-weight: 600;
+}
+
+/* ── sidebar ──────────────────────────────────────────── */
+
+.sidebar {
+  position: sticky;
+  top: 120px;
+  align-self: start;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  font-size: 0.88rem;
+}
+.sidebar h2 {
+  font: 600 0.78rem/1 var(--sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.source-list { list-style: none; margin: 0; padding: 0; }
+.source-list li { padding: 3px 0; }
+.source-list a { color: var(--text); }
+.source-list a.is-active { font-weight: 700; background-size: 100% 0.38em; }
+.refreshed { color: var(--muted); font-size: 0.8rem; margin-top: 16px; }
+
+/* ── sources directory ────────────────────────────────── */
+
+.source-group .blurb { margin-top: 10px; }
+.sources {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+.sources th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.sources td { padding: 10px 8px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.sources td > a:first-child { font-weight: 600; color: var(--text); text-decoration: none; }
+.sources td > a:first-child:hover { color: var(--link); }
+.sources .num { text-align: right; font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); font-size: 0.82rem; }
+a.muted:hover { color: var(--link); }
+.status {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-right: 6px;
+  color: var(--muted);
+  background: var(--slate-soft);
+}
+.status-ok { color: var(--link); background: var(--slate-soft); }
+.status-error { color: var(--ink); background: var(--tomato); cursor: help; }
+
+/* ── footer ───────────────────────────────────────────── */
+
+.footer {
+  margin-top: 56px;
+  padding-top: 20px;
+  padding-bottom: 40px;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.footer p { margin: 0 0 6px; }
+
+/* ── responsive ───────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 0; padding-top: 20px; }
+  .sidebar { display: none; }
+}
+
+@media (max-width: 560px) {
+  .masthead { position: static; }
+  .masthead-inner { flex-wrap: wrap; }
+  .theme-toggle { margin-left: auto; }
+  .search { flex: 1 1 100%; order: 1; }
+  .river-head h1 { font-size: 1.6rem; }
+  .item-title { font-size: 1.08rem; }
+  .sources th:nth-child(2), .sources td:nth-child(2) { display: none; }
+}
+
+/* Single-column pages (search) */
+.layout-single { grid-template-columns: minmax(0, 1fr); max-width: 780px; }

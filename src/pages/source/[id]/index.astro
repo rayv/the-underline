@@ -1,0 +1,17 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Layout from '../../../layouts/Layout.astro';
+import River from '../../../components/River.astro';
+import { getItems } from '../../../lib/queries.ts';
+import { SOURCES } from '../../../lib/sources.ts';
+
+export const getStaticPaths = (() =>
+  SOURCES.map((source) => ({ params: { id: source.id }, props: { source } }))) satisfies GetStaticPaths;
+
+const { source } = Astro.props;
+const items = getItems({ sourceId: source.id }, 100);
+---
+
+<Layout title={source.name} active={source.category} feedHref={`/source/${source.id}/rss.xml`}>
+  <River items={items} sourceId={source.id} />
+</Layout>

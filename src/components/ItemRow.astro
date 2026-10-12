@@ -1,0 +1,33 @@
+---
+import type { Item } from '../lib/queries.ts';
+import { CATEGORIES, paths } from '../lib/sources.ts';
+import { hostname, isMajorCandidate, markedTitle, shortDateTime } from '../lib/format.ts';
+
+interface Props {
+  item: Item;
+  showCategory?: boolean;
+}
+
+const { item, showCategory = true } = Astro.props;
+const cat = item.source.category;
+const major = isMajorCandidate(item);
+---
+
+<li
+  class="item"
+  data-published={item.publishedAt.toISOString()}
+  data-arrived={item.fetchedAt.toISOString()}
+  data-major={major ? '' : undefined}
+>
+  <div class="item-meta">
+    {major && <span class="badge badge-major" hidden>Major</span>}
+    <span class="badge badge-new" hidden>New</span>
+    {showCategory && <a class="item-cat" href={paths.category(cat)}>{CATEGORIES[cat].label}</a>}
+    <a class="item-source" href={paths.source(item.source.id)}>{item.source.name}</a>
+    {item.author && item.author !== item.source.name && <span class="item-author">· {item.author}</span>}
+    <time data-relative datetime={item.publishedAt.toISOString()} title={shortDateTime(item.publishedAt)}>{shortDateTime(item.publishedAt)}</time>
+  </div>
+  <h3 class="item-title"><a href={item.url} target="_blank" rel="noopener" set:html={markedTitle(item.title)} /></h3>
+  {item.summary && <p class="item-summary">{item.summary}</p>}
+  {cat !== 'watch' && <span class="item-host">{hostname(item.url)}</span>}
+</li>

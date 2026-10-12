@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import River from '../components/River.astro';
+import { getItems } from '../lib/queries.ts';
+
+const items = getItems();
+
+// Refuse to publish an empty site (e.g. a build that ran without the database); the previous deploy stays live.
+if (!items.length && import.meta.env.PROD && process.env.ALLOW_EMPTY !== '1') {
+  throw new Error('No items in data/news.db. Run `npm run fetch` before building, or set ALLOW_EMPTY=1.');
+}
+---
+
+<Layout>
+  <River items={items} />
+</Layout>
