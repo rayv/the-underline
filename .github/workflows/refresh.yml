@@ -2,6 +2,7 @@
 # The database lives in the Actions cache between runs (see docs/netlify-migration.md).
 #
 # Required repo secrets: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID
+# Optional repo secret: OPENALEX_API_KEY (free; keeps Research fetches off the shared keyless quota)
 # Optional repo variable: SITE_URL (e.g. https://theunderline.netlify.app), used for absolute RSS links.
 
 name: Refresh and deploy
@@ -57,6 +58,8 @@ jobs:
 
       - name: Fetch feeds
         run: npm run fetch -- --remote
+        env:
+          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
 
       - name: Save database
         uses: actions/cache/save@v4

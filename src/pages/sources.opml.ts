@@ -5,11 +5,11 @@ import { SITE_NAME } from '../lib/format.ts';
 const xml = (s: string) =>
   s.replace(/[<>&'"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' })[c]!);
 
-// Every source feed, grouped by section, for import into a feed reader.
+// Every source feed, grouped by section, for import into a feed reader. JSON API sources are left out; readers can't use them.
 export const GET: APIRoute = () => {
   const groups = CATEGORY_KEYS.map(
     (cat) => `    <outline text="${xml(CATEGORIES[cat].label)}">
-${SOURCES.filter((s) => s.category === cat)
+${SOURCES.filter((s) => s.category === cat && !s.format)
   .map((s) => `      <outline type="rss" text="${xml(s.name)}" title="${xml(s.name)}" xmlUrl="${xml(s.feed)}" htmlUrl="${xml(s.site)}"/>`)
   .join('\n')}
     </outline>`,

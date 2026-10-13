@@ -56,6 +56,10 @@ const countByCategory = Object.fromEntries(CATEGORY_KEYS.map((c) => [c, SOURCES.
     <h2>How it works</h2>
     <ul>
       <li>The site updates once a day, early in the morning Pacific time, from the publishers' public RSS feeds.</li>
+      <li>
+        <a href={paths.category('research')}>Research</a> follows selected journals through <a href="https://openalex.org" target="_blank" rel="noopener">OpenAlex</a>,
+        an open index of scholarly work, plus preprints from arXiv and EdArXiv. The summary is the start of the paper's abstract.
+      </li>
       <li>Some vendors don't publish a feed. For those, <a href={paths.category('watch')}>Vendor Watch</a> follows their press coverage through Google News.</li>
       <li>Headlines are sorted into topics automatically by keyword, so the occasional story will land in the wrong one.</li>
       <li>There are no ads, accounts, or trackers. Your preferences (theme, filters, what you've seen) are stored only in your own browser.</li>

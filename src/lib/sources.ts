@@ -1,7 +1,10 @@
 // The source registry. Every feed here was verified to return a parseable feed;
 // run `npm run check-feeds` to re-verify after editing.
 
-export type Category = 'news' | 'vendor' | 'blog' | 'org' | 'watch';
+export type Category = 'news' | 'vendor' | 'blog' | 'org' | 'watch' | 'research';
+
+/** A JSON API that `feed` points at, read by an adapter in research.ts. Sources without one are RSS/Atom feeds. */
+export type Format = 'openalex' | 'osf';
 
 export interface Source {
   id: string;
@@ -9,7 +12,8 @@ export interface Source {
   site: string;
   feed: string;
   category: Category;
-  /** Only keep items whose title/summary match — for broad feeds that aren't higher-ed specific. */
+  format?: Format;
+  /** Only keep items whose title/summary (for research, the whole abstract) match — for broad feeds that aren't higher-ed specific. */
   include?: RegExp;
   /**
    * The publisher blocks cloud servers (GitHub Actions gets 403s or timeouts), so this feed is fetched on the
@@ -23,7 +27,8 @@ export const CATEGORIES: Record<Category, { label: string; slug: string; blurb: 
   vendor: { label: 'Vendors', slug: 'vendors', blurb: 'Blogs and newsrooms from companies that build for higher ed' },
   watch: { label: 'Vendor Watch', slug: 'vendor-watch', blurb: 'Press coverage of vendors and outlets that do not publish their own feeds (via Google News)' },
   blog: { label: 'Voices', slug: 'voices', blurb: 'Bloggers, newsletters, and podcasts from people in the field' },
-  org: { label: 'Orgs & Research', slug: 'orgs', blurb: 'Associations, consortia, foundations, and research groups' },
+  org: { label: 'Orgs & Reports', slug: 'orgs', blurb: 'Associations, consortia, foundations, and research groups: their news and reports' },
+  research: { label: 'Research', slug: 'research', blurb: 'New papers from ed tech and student success journals, and preprints from arXiv and EdArXiv' },
 };
 
 export const CATEGORY_KEYS = Object.keys(CATEGORIES) as Category[];
@@ -41,6 +46,27 @@ const EDU = /\b(higher ed|higher-ed|universit|college|campus|student|faculty|edu
 
 const googleNews = (query: string) =>
   `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+
+// Research: journals are followed through OpenAlex (one source ID per journal), which supplies the abstracts that
+// publisher feeds lack. EdArXiv covers all of education, so it's narrowed to higher ed papers on ed tech or student success.
+const HIGHER_ED = /\b(higher education|universit(?:y|ies)|colleges?|undergraduates?|postsecondary|tertiary|campus)\b/i;
+const RESEARCH_FOCUS =
+  /\b(AI|artificial intelligence|generative|ChatGPT|LLMs?|large language models?|chatbots?|online|digital|e-?learning|MOOCs?|technolog\w*|analytics|learning management|dashboards?|retention|persistence|completion|student success|advising|first[- ]generation|drop-?outs?|attrition|belonging|basic needs)\b/i;
+/** Matches text that matches every one of `patterns`, in any order. */
+const allOf = (...patterns: RegExp[]) => new RegExp(patterns.map((p) => `(?=[^]*${p.source})`).join(''), 'i');
+const RESEARCH_WINDOW_DAYS = 90;
+
+const openAlexJournal = (sourceId: string) => {
+  const since = new Date(Date.now() - RESEARCH_WINDOW_DAYS * 86_400_000).toISOString().slice(0, 10);
+  return `https://api.openalex.org/works?filter=primary_location.source.id:${sourceId},from_publication_date:${since},type:article&sort=publication_date:desc&per-page=50`;
+};
+
+const arxiv = (query: string) =>
+  `https://export.arxiv.org/api/query?search_query=${encodeURIComponent(query)}&sortBy=submittedDate&sortOrder=descending&max_results=50`;
+
+const research = (id: string, name: string, site: string, openAlexId: string): Source => ({
+  id, name, site, feed: openAlexJournal(openAlexId), category: 'research', format: 'openalex',
+});
 
 export const SOURCES: Source[] = [
   // ── News ────────────────────────────────────────────────────────────────
@@ -126,7 +152,7 @@ export const SOURCES: Source[] = [
   { id: 'teachinginhighered', name: 'Teaching in Higher Ed (Bonni Stachowiak)', site: 'https://teachinginhighered.com', feed: 'https://teachinginhighered.com/feed/', category: 'blog' },
   { id: 'teaforteaching', name: 'Tea for Teaching', site: 'https://teaforteaching.com', feed: 'https://teaforteaching.com/feed/', category: 'blog', local: true },
 
-  // ── Orgs & Research ─────────────────────────────────────────────────────
+  // ── Orgs & Reports ──────────────────────────────────────────────────────
   { id: 'ithaka', name: 'Ithaka S+R', site: 'https://sr.ithaka.org', feed: 'https://sr.ithaka.org/feed/', category: 'org' },
   { id: 'internet2', name: 'Internet2', site: 'https://internet2.edu', feed: 'https://internet2.edu/feed/', category: 'org' },
   { id: 'olc', name: 'Online Learning Consortium', site: 'https://onlinelearningconsortium.org', feed: 'https://onlinelearningconsortium.org/feed/', category: 'org' },
@@ -143,6 +169,39 @@ export const SOURCES: Source[] = [
   { id: 'ihep', name: 'Institute for Higher Education Policy', site: 'https://www.ihep.org', feed: 'https://www.ihep.org/feed/', category: 'org' },
   { id: 'tyton', name: 'Tyton Partners', site: 'https://tytonpartners.com', feed: 'https://tytonpartners.com/feed/', category: 'org' },
   { id: 'oeglobal', name: 'Open Education Global', site: 'https://www.oeglobal.org', feed: 'https://www.oeglobal.org/feed/', category: 'org' },
+
+  // ── Research: ed tech journals ──────────────────────────────────────────
+  research('jla', 'Journal of Learning Analytics', 'https://learning-analytics.info', 'S2764890288'),
+  research('jedm', 'Journal of Educational Data Mining', 'https://jedm.educationaldatamining.org', 'S7407065558'),
+  research('irrodl', 'IRRODL', 'https://www.irrodl.org', 'S2764977688'),
+  research('olj', 'Online Learning', 'https://olj.onlinelearningconsortium.org', 'S4210168624'),
+  research('ijethe', 'Intl. Journal of Ed Tech in Higher Education', 'https://educationaltechnologyjournal.springeropen.com', 'S4210201537'),
+  research('iheduc', 'The Internet and Higher Education', 'https://www.sciencedirect.com/journal/the-internet-and-higher-education', 'S166850901'),
+  research('compedu', 'Computers & Education', 'https://www.sciencedirect.com/journal/computers-and-education', 'S4210172634'),
+  research('compedu-open', 'Computers and Education Open', 'https://www.sciencedirect.com/journal/computers-and-education-open', 'S4210232537'),
+  research('compedu-ai', 'Computers and Education: Artificial Intelligence', 'https://www.sciencedirect.com/journal/computers-and-education-artificial-intelligence', 'S4210183364'),
+  research('bjet', 'British Journal of Educational Technology', 'https://bera-journals.onlinelibrary.wiley.com/journal/14678535', 'S110346167'),
+  research('etrd', 'Educational Technology Research and Development', 'https://link.springer.com/journal/11423', 'S114840262'),
+  research('ajet', 'Australasian Journal of Educational Technology', 'https://ajet.org.au', 'S126947272'),
+
+  // ── Research: student success and higher ed journals ────────────────────
+  research('jcsr', 'Journal of College Student Retention', 'https://journals.sagepub.com/home/csr', 'S90155489'),
+  research('ssj', 'Student Success', 'https://studentsuccessjournal.org', 'S4210231101'),
+  research('jcsd', 'Journal of College Student Development', 'https://muse.jhu.edu/journal/238', 'S10595604'),
+  research('jsarp', 'Journal of Student Affairs Research and Practice', 'https://www.tandfonline.com/journals/uarp21', 'S2764968510'),
+  research('ccr', 'Community College Review', 'https://journals.sagepub.com/home/crw', 'S73080522'),
+  research('rihe', 'Research in Higher Education', 'https://link.springer.com/journal/11162', 'S130619902'),
+  research('jhe', 'The Journal of Higher Education', 'https://www.tandfonline.com/journals/uhej20', 'S71326023'),
+
+  // ── Research: preprints ─────────────────────────────────────────────────
+  {
+    id: 'arxiv-highered', name: 'arXiv: Computing & Higher Ed', site: 'https://arxiv.org/list/cs.CY/recent', category: 'research',
+    feed: arxiv('(cat:cs.CY OR cat:cs.HC OR cat:cs.CL) AND (abs:"higher education" OR abs:undergraduate OR abs:"university students" OR abs:"college students")'),
+  },
+  {
+    id: 'edarxiv', name: 'EdArXiv', site: 'https://edarxiv.org', category: 'research', format: 'osf', include: allOf(HIGHER_ED, RESEARCH_FOCUS),
+    feed: 'https://api.osf.io/v2/preprints/?filter%5Bprovider%5D=edarxiv&sort=-date_published&page%5Bsize%5D=50&embed=contributors',
+  },
 ];
 
 export const SOURCE_BY_ID = new Map(SOURCES.map((s) => [s.id, s]));

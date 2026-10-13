@@ -36,6 +36,7 @@ Environment variables:
 | `SITE_TZ` | `America/Los_Angeles` | Timezone used to group headlines by day |
 | `DB_PATH` | `data/news.db` | SQLite file |
 | `ALLOW_EMPTY` | unset | Set to `1` to allow building with an empty database |
+| `OPENALEX_API_KEY` | unset | Free [OpenAlex](https://openalex.org) key for the Research sources. They work without one, but the keyless daily quota is per IP, and GitHub's runners share IPs. |
 
 ## How it works
 
@@ -43,6 +44,7 @@ Environment variables:
 src/lib/sources.ts   source registry: the one file to edit when adding or removing feeds
 src/lib/topics.ts    cross-section topics (e.g. Student Success) and their keyword rules
 src/lib/fetcher.ts   fetch feeds → data/news.db
+src/lib/research.ts  adapters for the JSON APIs behind Research (OpenAlex, OSF)
 src/lib/db.ts        SQLite (built-in node:sqlite)
 src/lib/queries.ts   read items and source health for the build
 src/lib/format.ts    shared helpers: dates, highlighting, paging
@@ -58,6 +60,7 @@ src/styles/          global.css (palette tokens, light and dark)
 - `watch`: Google News searches for vendors and outlets with no usable feed
 - `blog`
 - `org`
+- `research`: journal articles and preprints (see below)
 
 An optional `include` regex keeps only education-related posts from broad feeds such as AWS, Zoom and OpenAI.
 
@@ -79,7 +82,7 @@ Search also runs in the browser, against `/search.json`.
 | Path | Content |
 | --- | --- |
 | `/`, `/page/N/` | All headlines |
-| `/news/`, `/vendors/`, `/vendor-watch/`, `/voices/`, `/orgs/` (+ `page/N/`) | Sections |
+| `/news/`, `/vendors/`, `/vendor-watch/`, `/voices/`, `/orgs/`, `/research/` (+ `page/N/`) | Sections |
 | `/source/<id>/` | One source |
 | `/topics/<slug>/` (+ `page/N/`) | A topic page: `higher-ed`, `ed-tech` or `student-success` |
 | `/sources/` | Every source, with its health and latest item |
@@ -138,6 +141,20 @@ On a reader's first page view, a dialog explains the site (`src/components/Welco
 ## Quiet sources
 
 Sources with nothing published in the last 90 days are hidden from sidebars, which keeps out personal blogs that have gone dormant. They're still fetched and still have their own pages, and `/sources/` labels them "Quiet". They reappear in sidebars as soon as they publish again.
+
+## Research
+
+The Research section follows journals and preprint servers for ed tech and student success.
+
+- **Journals** come from [OpenAlex](https://openalex.org), one source per journal (`research()` in `sources.ts`, keyed by OpenAlex source ID). OpenAlex has abstracts and covers publishers whose feeds are missing or thin. Each fetch asks for the last 90 days of articles. Requests go one at a time, because OpenAlex answers bursts with HTTP 429.
+- **arXiv** is an ordinary Atom feed: an API query over `cs.CY`, `cs.HC` and `cs.CL` for abstracts that mention higher ed.
+- **EdArXiv** comes from the OSF preprints API (`format: 'osf'`), narrowed to higher ed with `include`. The API is slow, so API sources get a 60-second timeout.
+
+API sources set `format` in the registry, and `src/lib/research.ts` turns each response into the same shape rss-parser returns, so the rest of the fetcher (cleanup, `include`, dedupe) treats them like any feed. API sources are left out of the OPML, and are labeled "API" on `/sources/`.
+
+Papers reach topics through each topic's `sources` list: ed tech journals and arXiv are Ed Tech, and student success journals are Student Success. EdArXiv is sorted by keyword. Research titles are deduped against the last 365 days rather than 14, since a preprint and its journal version can be months apart.
+
+To add a journal, find its OpenAlex source ID (`curl 'https://api.openalex.org/sources/issn:1234-5678?select=id,display_name'`), add a `research(...)` entry, add the id to a topic, and run `npm run check-feeds -- <id>`.
 
 ## Adding a source
 

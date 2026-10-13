@@ -47,7 +47,7 @@ const quiet = statuses.filter((s) => !active.has(s.source.id)).length;
                   ) : (
                     <span class="status">Pending</span>
                   )}
-                  <a class="muted" href={s.source.feed} target="_blank" rel="noopener">feed</a>
+                  <a class="muted" href={s.source.feed} target="_blank" rel="noopener">{s.source.format ? 'API' : 'feed'}</a>
                 </td>
               </tr>
             ))}
