@@ -49,7 +49,7 @@ const filterable = !sourceId && !topic;
         <p class="blurb">
           <a href={source.site} target="_blank" rel="noopener">{hostname(source.site)}</a> ·
           <a href={paths.category(source.category)}>{CATEGORIES[source.category].label}</a> ·
-          <a href={source.feed} target="_blank" rel="noopener">Original feed</a>
+          <a href={source.feed} target="_blank" rel="noopener">{source.format ? 'Source query (API)' : 'Original feed'}</a>
         </p>
       ) : (
         <p class="blurb">{blurb}</p>

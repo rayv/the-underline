@@ -1,5 +1,6 @@
 import Parser from 'rss-parser';
 import { db } from './db.ts';
+import { parseApi, requestFeed } from './research.ts';
 import { SOURCES, type Source } from './sources.ts';
 
 // Several publishers sit behind bot filters that reject non-browser user agents.
@@ -94,22 +95,27 @@ async function fetchSource(source: Source): Promise<FetchResult> {
 
   const headers: Record<string, string> = {
     'user-agent': USER_AGENT,
-    accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5',
+    accept: source.format
+      ? 'application/json, application/vnd.api+json;q=0.9'
+      : 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.5',
   };
   if (prev?.etag) headers['if-none-match'] = prev.etag;
   if (prev?.last_modified) headers['if-modified-since'] = prev.last_modified;
 
   try {
-    const res = await fetch(source.feed, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    const res = await requestFeed(source, headers, TIMEOUT_MS);
     if (res.status === 304) {
       upsertStatus.run(source.id, null, null, nowIso, nowIso, null, source.id);
       return { source, added: 0, status: 'not-modified' };
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const feed = await parser.parseString(sanitizeXml(await res.text()));
+    const body = await res.text();
+    const feed = source.format ? parseApi(source, body) : await parser.parseString(sanitizeXml(body));
     const cutoff = new Date(now.getTime() - MAX_AGE_DAYS * 86_400_000).toISOString();
-    const dedupeWindow = new Date(now.getTime() - 14 * 86_400_000).toISOString();
+    // Papers resurface months later (a preprint, then the journal version), so research dedupes over a longer window.
+    const dedupeDays = source.category === 'research' ? 365 : 14;
+    const dedupeWindow = new Date(now.getTime() - dedupeDays * 86_400_000).toISOString();
     const isGoogleNews = source.feed.startsWith('https://news.google.com/');
     let added = 0;
 
@@ -131,8 +137,12 @@ async function fetchSource(source: Source): Promise<FetchResult> {
       if (publishedIso < cutoff) continue;
 
       // Google News descriptions are just the headline again, so skip them.
-      const summary = isGoogleNews ? '' : cleanSummary(cleanText(item.contentSnippet ?? item.content ?? item.summary, 600), title);
-      if (source.include && !source.include.test(`${title} ${summary}`)) continue;
+      const body = item.contentSnippet ?? item.content ?? item.summary;
+      const summary = isGoogleNews ? '' : cleanSummary(cleanText(body, 600), title);
+      // Papers state their setting deep in the abstract, so research filters read all of it; for broad feeds
+      // (AWS, Zoom) that would let in posts that mention education once in passing.
+      const filterText = source.category === 'research' ? cleanText(body, 5000) : summary;
+      if (source.include && !source.include.test(`${title} ${filterText}`)) continue;
       if (recentTitleExists.get(source.id, dedupeWindow, title.toLowerCase())) continue;
 
       const guid = item.guid ?? item.id ?? url;

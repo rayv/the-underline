@@ -32,10 +32,14 @@ export const TOPICS: Topic[] = [
     excludeCategories: ['vendor'],
     // Mixed-audience outlets carry K-12 district stories that hit words like "enrollment" and "budget".
     exclude: anyOf(['K-?12', 'school districts?', 'district schools', 'kindergarten', 'elementary', 'middle schools?', 'pre-?K']),
-    sources: ['highereddive', 'gn-chronicle', 'sheeo', 'ihep', 'lumina', 'nsc-research', 'opencampus', 'workshift', 'wonkhe', 'thepienews', 'kelchen'],
+    sources: [
+      'highereddive', 'gn-chronicle', 'sheeo', 'ihep', 'lumina', 'nsc-research', 'opencampus', 'workshift', 'wonkhe', 'thepienews', 'kelchen',
+      'rihe', 'jhe', 'ccr',
+    ],
     pattern: anyOf([
       // policy and government
-      'polic(?:y|ies)', 'federal', 'congress', 'senate', 'lawmakers?', 'legislat\\w*', 'regulat\\w*',
+      // Not "self-regulated learning", which is all over ed tech research.
+    'polic(?:y|ies)', 'federal', 'congress', 'senate', 'lawmakers?', 'legislat\\w*', '(?<!self-)regulat\\w*',
       '(?:Department|Dept\\.?) of Education', 'Education Department', 'White House', 'Trump administration', 'executive orders?',
       'Title (?:IV|IX|VI)', 'FAFSA', 'Pell', 'student loans?', 'loan forgiveness', 'accredit\\w*', 'compliance',
       // money
@@ -65,6 +69,8 @@ export const TOPICS: Topic[] = [
       'internet2', 'olc', 'qualitymatters', 'openedx', 'oeglobal', 'everylearner',
       'oldaily', 'halfanhour', 'tonybates', 'eliterate', 'audreywatters', 'edtechie', 'bavatuesdays', 'cogdog', 'oneusefulthing',
       'lanceeaton', 'marcwatkins', 'leonfurze', 'annamills', 'donaldclark',
+      // Research journals and preprints
+      'jla', 'jedm', 'irrodl', 'olj', 'ijethe', 'iheduc', 'compedu', 'compedu-open', 'compedu-ai', 'bjet', 'etrd', 'ajet', 'arxiv-highered',
     ],
     pattern: anyOf([
       'ed ?tech', 'LMS', 'learning management', 'courseware', 'OPMs?', 'online (?:learning|courses?|programs?|education)', 'digital (?:learning|tools?|transformation|credentials?)',
@@ -79,7 +85,11 @@ export const TOPICS: Topic[] = [
     slug: 'student-success',
     label: 'Student Success',
     blurb: 'Retention, completion, advising, basic needs, and the tools and research behind them',
-    sources: ['highereddive-success', 'everylearner', 'atd', 'nsc-research', 'mainstay', 'gn-eab', 'gn-civitas'],
+    sources: [
+      'highereddive-success', 'everylearner', 'atd', 'nsc-research', 'mainstay', 'gn-eab', 'gn-civitas',
+      // Research journals
+      'jcsr', 'ssj', 'jcsd', 'jsarp', 'ccr',
+    ],
     pattern: anyOf(
       [
         'student success',
